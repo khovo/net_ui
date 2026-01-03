@@ -2,71 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RiyalNet Bot</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RiyalNet</title>
+    
+    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        body { background-color: #0f111a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
-        .card { background: #161b28; padding: 20px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .btn { background: #f1c40f; color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
-        h1 { color: #f1c40f; }
-    </style>
+    <!-- Monetag Ads -->
+    <script src='//libtl.com/sdk.js' data-zone='10378147' data-sdk='show_10378147'></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- CSS Link (Same Folder) -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div id="app">
-        <h1>RiyalNet 🚀</h1>
-        <p>User: <span id="username">Loading...</span></p>
-        
-        <div class="card">
-            <p>BALANCE</p>
-            <h1 id="balance">0.00 ETB</h1>
-        </div>
-
-        <button class="btn" onclick="watchAd()">📺 Watch Ad (+0.50)</button>
+    <!-- Loader -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <p>Connecting...</p>
     </div>
 
-    <script>
-        // ⚠️ እዚህ ጋር የ BACKEND ሊንክህን ታስገባለህ (Backendን Deploy ካደረግክ በኋላ)
-        // ለምሳሌ: "https://riyalnet-backend.vercel.app"
-        const BACKEND_URL = "https://net-end.vercel.app"; 
+    <!-- App Body -->
+    <div id="app" class="hidden">
+        
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="profile">
+                <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
+                <div class="info">
+                    <h3 id="username">Guest</h3>
+                    <span class="id-badge">ID: <span id="userid">...</span></span>
+                </div>
+            </div>
+            <div class="status"></div>
+        </div>
 
-        let user = { id: 0, first_name: "Guest" };
-
-        // 1. Telegram User ማግኘት
-        window.onload = function() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-                const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
-                if (tgUser) {
-                    user.id = tgUser.id;
-                    user.first_name = tgUser.first_name;
-                }
-            }
-            document.getElementById('username').innerText = user.first_name;
+        <!-- Balance Card -->
+        <div class="balance-box">
+            <div class="glow"></div>
+            <span class="label">TOTAL BALANCE</span>
+            <h1 class="amount"><span id="balance">0.00</span> <small>ETB</small></h1>
             
-            // ዳታ ከ Backend ለመቀበል (Backend ሲሰራ ይሄን እናበራዋለን)
-            // fetchUserData(); 
-        };
+            <div class="quick-links">
+                <div onclick="openUrl('https://t.me/yourpaymentproofchannel')">
+                    <i class="fas fa-receipt"></i> Payment
+                </div>
+                <div onclick="openUrl('https://t.me/imranun')">
+                    <i class="fas fa-headset"></i> Support
+                </div>
+                <div onclick="openUrl('https://t.me/eliteledger')">
+                    <i class="fas fa-bullhorn"></i> News
+                </div>
+            </div>
+        </div>
 
-        // 2. Watch Ad (Simulation -> Backend Call)
-        function watchAd() {
-            // እዚህ ጋር ወደ Backend "ብር ጨምር" ብለን እንልካለን
-            alert("ይሄ Frontend ነው። Backend ሲሰራ እዚህ ጋር ይገናኛል!");
+        <!-- Content Tabs -->
+        <div id="main-content">
             
-            /* Backend ሲሰራ የሚገባው ኮድ:
-            fetch(`${BACKEND_URL}/api/add_balance`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ user_id: user.id, amount: 0.50 })
-            })
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('balance').innerText = data.new_balance + " ETB";
-            });
-            */
-        }
-    </script>
+            <!-- HOME -->
+            <div id="tab-home" class="tab-view active">
+                <div class="section-header">EARN MONEY</div>
+                
+                <div class="menu-item" onclick="watchAd()">
+                    <div class="icon ads"><i class="fas fa-play"></i></div>
+                    <div class="text">
+                        <h4>Watch Ads</h4>
+                        <p>+0.50 ETB per video</p>
+                    </div>
+                    <button class="btn-action">GO</button>
+                </div>
+
+                <div class="menu-item" onclick="switchTab('invite')">
+                    <div class="icon invite"><i class="fas fa-user-plus"></i></div>
+                    <div class="text">
+                        <h4>Invite Friends</h4>
+                        <p>Earn Unlimited</p>
+                    </div>
+                    <button class="btn-action">GO</button>
+                </div>
+            </div>
+
+            <!-- INVITE -->
+            <div id="tab-invite" class="tab-view hidden">
+                <div class="info-box">
+                    <i class="fas fa-gift big-icon"></i>
+                    <h2>Invite & Earn</h2>
+                    <p>Share your link to earn rewards!</p>
+                    <div class="input-wrap">
+                        <input type="text" id="ref-link" readonly value="...">
+                        <button onclick="copyLink()"><i class="far fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WALLET -->
+            <div id="tab-wallet" class="tab-view hidden">
+                <div class="info-box">
+                    <h2>Withdraw</h2>
+                    <p>Min Withdrawal: 50 ETB</p>
+                    <button class="btn-withdraw" onclick="alert('Insufficient Balance')">Withdraw</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Bottom Nav -->
+        <nav class="bottom-nav">
+            <div class="nav-btn active" onclick="switchTab('home', this)">
+                <i class="fas fa-home"></i> <span>Home</span>
+            </div>
+            <div class="nav-btn" onclick="switchTab('invite', this)">
+                <i class="fas fa-users"></i> <span>Invite</span>
+            </div>
+            <div class="nav-btn" onclick="switchTab('wallet', this)">
+                <i class="fas fa-wallet"></i> <span>Wallet</span>
+            </div>
+        </nav>
+
+    </div>
+
+    <!-- JS Link (Same Folder) -->
+    <script src="script.js"></script>
 </body>
 </html>
