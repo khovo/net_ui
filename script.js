@@ -143,46 +143,34 @@ async function adminAddTask() {
     const link = document.getElementById('adm-task-link').value;
     const reward = document.getElementById('adm-task-reward').value;
     
-    if(!title || !link) return alert("Fill all fields");
-    
-    await fetch(`${BACKEND_URL}/api/tasks`, {
+    await fetch(`${BACKEND_URL}/api/admin/action`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, link, reward: parseFloat(reward) })
+        body: JSON.stringify({ 
+            admin_id: user.id, // Security Check
+            action: "add_task",
+            task: { title, link, reward }
+        })
     });
     alert("Task Added!");
-    loadTasks();
 }
 
 async function adminAddMoney() {
     const uid = document.getElementById('adm-uid').value;
     const amt = document.getElementById('adm-amt').value;
     
-    await fetch(`${BACKEND_URL}/api/add_balance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, amount: parseFloat(amt) })
+    await fetch(`${BACKEND_URL}/api/admin/action`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            admin_id: user.id, // Security Check
+            action: "send_money",
+            target_id: uid,
+            amount: parseFloat(amt)
+        })
     });
-    alert("Money Sent!");
-    initData();
+    alert("Sent!");
 }
-
-async function loadWithdrawals() {
-    const res = await fetch(`${BACKEND_URL}/api/admin/withdrawals`);
-    const list = await res.json();
-    const box = document.getElementById('admin-withdrawals');
-    
-    if(list.length === 0) {
-        box.innerHTML = "<p>No requests</p>";
-    } else {
-        box.innerHTML = list.map(w => 
-            `<div style="background:#111; padding:10px; margin:5px; border-radius:5px; font-size:12px;">
-                ${w.amount} ETB - ${w.user_id} <br> ${w.method}: ${w.account} <br> ${w.status}
-            </div>`
-        ).join('');
-    }
-}
-
 // --- TASKS LIST ---
 async function loadTasks() {
     try {
