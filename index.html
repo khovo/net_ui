@@ -4,97 +4,403 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RiyalNet</title>
+    
+    <!-- External Libraries -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src='//libtl.com/sdk.js' data-zone='10378147' data-sdk='show_10378147'></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+
+    <style>
+        /* --- CSS DESIGN (FULL) --- */
+        :root {
+            --bg-color: #0f111a;
+            --card-bg: #161b28;
+            --primary: #f1c40f;
+            --accent: #2D6CFF;
+            --text-main: #ffffff;
+            --text-muted: #8899a6;
+            --border: 1px solid #232d45;
+            --green: #2ecc71;
+            --red: #e74c3c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+        /* LOADING SCREEN */
+        #loading_screen {
+            position: fixed; inset: 0; background: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.5s;
+        }
+        .spinner { width: 50px; height: 50px; border: 4px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading_text { margin-top: 20px; font-size: 14px; color: var(--text-muted); }
+
+        /* HEADER */
+        .header {
+            padding: 15px 20px; background: rgba(22, 27, 40, 0.95); border-bottom: var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .user_wrap { display: flex; align-items: center; gap: 12px; }
+        .avatar_img { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); background: #333; object-fit: cover; }
+        .user_text h3 { font-size: 16px; font-weight: bold; margin-bottom: 4px; }
+        .user_id { font-size: 11px; color: var(--text-muted); background: rgba(255,255,255,0.1); padding: 2px 8px; border-radius: 6px; }
+        
+        #admin_btn { color: var(--primary); font-size: 18px; padding: 5px; cursor: pointer; display: none; }
+
+        /* BALANCE CARD */
+        .balance_card {
+            margin: 20px; padding: 25px;
+            background: linear-gradient(135deg, #1e2538 0%, #000 100%);
+            border-radius: 20px; text-align: center; border: var(--border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; overflow: hidden;
+        }
+        .balance_label { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; font-weight: bold; }
+        .balance_amount { font-size: 42px; margin: 10px 0 20px; font-weight: 800; text-shadow: 0 0 20px rgba(241,196,15,0.2); }
+        .balance_amount small { font-size: 16px; color: var(--primary); }
+
+        /* QUICK ACTIONS */
+        .quick_actions { display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
+        .q_btn { font-size: 11px; color: var(--text-muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .q_btn i { font-size: 18px; color: var(--primary); background: rgba(241,196,15,0.1); width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 12px; }
+
+        /* TABS CONTENT */
+        #main_content { flex: 1; overflow-y: auto; padding-bottom: 90px; }
+        .tab_view { display: none; animation: fadeIn 0.3s; }
+        .tab_view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* MENU LIST */
+        .menu_list { padding: 0 20px; }
+        .menu_item {
+            background: var(--card-bg); padding: 15px; border-radius: 16px;
+            display: flex; align-items: center; gap: 15px; margin-bottom: 12px;
+            border: var(--border); transition: 0.2s;
+        }
+        .menu_item:active { transform: scale(0.98); border-color: var(--primary); }
+        .menu_icon { width: 45px; height: 45px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 20px; }
+        .menu_text h4 { font-size: 14px; margin-bottom: 3px; font-weight: 600; }
+        .menu_text p { font-size: 11px; color: var(--text-muted); }
+        .btn_go { margin-left: auto; background: var(--primary); border: none; padding: 8px 20px; border-radius: 20px; font-weight: bold; font-size: 12px; cursor: pointer; color: #000; }
+
+        /* STATS GRID */
+        .stats_grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
+        .stat_box { background: var(--card-bg); padding: 12px; border-radius: 12px; text-align: center; border: var(--border); }
+        .stat_box span { display: block; font-size: 16px; font-weight: bold; color: var(--text-main); }
+        .stat_box small { font-size: 10px; color: var(--text-muted); }
+
+        /* INVITE PAGE */
+        .invite_card { background: linear-gradient(135deg, #8e44ad, #3498db); padding: 30px 20px; margin: 20px; border-radius: 20px; text-align: center; color: white; box-shadow: 0 10px 20px rgba(142,68,173,0.3); }
+        .copy_box { background: rgba(0,0,0,0.3); display: flex; margin-top: 20px; border-radius: 10px; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .copy_box input { flex: 1; background: transparent; border: none; color: white; padding: 12px; outline: none; font-size: 12px; }
+        .copy_box button { background: white; color: #8e44ad; border: none; padding: 0 20px; font-weight: bold; cursor: pointer; }
+
+        /* ADMIN & WALLET */
+        .form_box { background: var(--card-bg); padding: 20px; margin: 20px; border-radius: 15px; border: var(--border); }
+        .input_field { width: 100%; padding: 12px; background: #000; border: 1px solid #333; color: white; border-radius: 8px; margin-bottom: 10px; outline: none; }
+        .btn_full { width: 100%; padding: 14px; background: var(--primary); border: none; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        /* NAVIGATION */
+        .bottom_nav {
+            position: fixed; bottom: 0; left: 0; width: 100%; background: #111;
+            display: flex; justify-content: space-around; padding: 12px 0 25px;
+            border-top: var(--border); z-index: 100;
+        }
+        .nav_btn { text-align: center; color: var(--text-muted); font-size: 10px; cursor: pointer; transition: 0.3s; flex: 1; }
+        .nav_btn i { font-size: 22px; display: block; margin-bottom: 5px; }
+        .nav_btn.active { color: var(--primary); }
+        .nav_btn.active i { transform: translateY(-3px); text-shadow: 0 0 10px rgba(241,196,15,0.5); }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
 
-    <div id="loader"><div class="spinner"></div></div>
-
-    <div id="app" class="hidden">
-        <!-- Header -->
-        <div class="top-bar">
-            <div class="profile">
-                <!-- 🔥 Profile Picture Here 🔥 -->
-                <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
-                <div class="info">
-                    <h3 id="username">Guest</h3>
-                    <span class="id-badge">ID: <span id="userid">...</span></span>
-                </div>
-            </div>
-            <!-- Admin Icon (Only for you) -->
-            <div id="admin-icon" class="hidden" onclick="switchTab('admin')">
-                <i class="fas fa-crown" style="color: gold; font-size: 20px;"></i>
-            </div>
-        </div>
-
-        <div class="balance-box">
-            <div class="glow"></div>
-            <span class="label">TOTAL BALANCE</span>
-            <h1 class="amount"><span id="balance">0.00</span> <small>ETB</small></h1>
-            <div class="quick-links">
-                <div onclick="openUrl('https://t.me/yourpaymentproofchannel')"><i class="fas fa-receipt"></i> Payment</div>
-                <div onclick="openUrl('https://t.me/imranun')"><i class="fas fa-headset"></i> Support</div>
-                <div onclick="openUrl('https://t.me/eliteledger')"><i class="fas fa-bullhorn"></i> News</div>
-            </div>
-        </div>
-
-        <div id="main-content">
-            <!-- HOME -->
-            <div id="tab-home" class="tab-view active">
-                <div class="menu-item" onclick="watchAd()">
-                    <div class="icon ads"><i class="fas fa-play"></i></div>
-                    <div class="text"><h4>Watch Ads</h4><p>+0.50 ETB</p></div>
-                    <button class="btn-action">GO</button>
-                </div>
-                <div class="menu-item" onclick="switchTab('tasks')">
-                    <div class="icon invite"><i class="fas fa-list"></i></div>
-                    <div class="text"><h4>Tasks</h4><p>New Tasks Added</p></div>
-                    <button class="btn-action">OPEN</button>
-                </div>
-            </div>
-
-            <!-- TASKS -->
-            <div id="tab-tasks" class="tab-view hidden">
-                <div class="section-header">AVAILABLE TASKS</div>
-                <div id="tasks-container">Loading...</div>
-            </div>
-
-            <!-- ADMIN PANEL -->
-            <div id="tab-admin" class="tab-view hidden">
-                <div class="info-box">
-                    <h3>👑 Admin Panel</h3>
-                    
-                    <h4>➕ Add Task</h4>
-                    <input type="text" id="adm-task-title" placeholder="Title" class="input-field">
-                    <input type="text" id="adm-task-link" placeholder="Link" class="input-field">
-                    <input type="number" id="adm-task-reward" placeholder="Reward" class="input-field">
-                    <button class="btn-withdraw" onclick="adminAddTask()">Create Task</button>
-                    
-                    <hr style="border: 1px solid #333; margin: 20px 0;">
-                    
-                    <h4>💰 User Balance</h4>
-                    <input type="text" id="adm-uid" placeholder="User ID" class="input-field">
-                    <input type="number" id="adm-amt" placeholder="Amount" class="input-field">
-                    <button class="btn-withdraw" onclick="adminAddMoney()">Send Money</button>
-
-                    <hr style="border: 1px solid #333; margin: 20px 0;">
-                    
-                    <h4>🏦 Withdrawal Requests</h4>
-                    <div id="admin-withdrawals">Loading requests...</div>
-                    <button class="btn-action" onclick="loadWithdrawals()">Refresh</button>
-                </div>
-            </div>
-        </div>
-
-        <nav class="bottom-nav">
-            <div class="nav-btn active" onclick="switchTab('home', this)"><i class="fas fa-home"></i> Home</div>
-            <div class="nav-btn" onclick="switchTab('tasks', this)"><i class="fas fa-tasks"></i> Tasks</div>
-            <div class="nav-btn" onclick="switchTab('wallet', this)"><i class="fas fa-wallet"></i> Wallet</div>
-        </nav>
+    <!-- 1. LOADING SCREEN -->
+    <div id="loading_screen">
+        <div class="spinner"></div>
+        <p class="loading_text" id="loading_msg">Connecting to Database...</p>
     </div>
-    <script src="script.js"></script>
+
+    <!-- 2. MAIN APP -->
+    <div id="app_container" class="hidden">
+        
+        <!-- HEADER -->
+        <header class="header">
+            <div class="user_wrap">
+                <img src="https://via.placeholder.com/50" id="u_avatar" class="avatar_img">
+                <div class="user_text">
+                    <h3 id="u_name">Guest</h3>
+                    <span class="user_id">ID: <span id="u_id">---</span></span>
+                </div>
+            </div>
+            <i class="fas fa-crown" id="admin_btn" onclick="nav('admin')"></i>
+        </header>
+
+        <!-- BALANCE -->
+        <div class="balance_card">
+            <div class="balance_label">TOTAL BALANCE</div>
+            <h1 class="balance_amount"><span id="u_bal">0.00</span> <small>ETB</small></h1>
+            <div class="quick_actions">
+                <div class="q_btn" onclick="openLink('https://t.me/yourpaymentproofchannel')">
+                    <i class="fas fa-receipt"></i> Payment
+                </div>
+                <div class="q_btn" onclick="openLink('https://t.me/imranun')">
+                    <i class="fas fa-headset"></i> Support
+                </div>
+                <div class="q_btn" onclick="openLink('https://t.me/eliteledger')">
+                    <i class="fas fa-bullhorn"></i> News
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTENT -->
+        <div id="main_content">
+            
+            <!-- TAB: HOME -->
+            <div id="view_home" class="tab_view active">
+                <div class="stats_grid">
+                    <div class="stat_box"><span id="s_ads">0</span><small>Ads</small></div>
+                    <div class="stat_box"><span id="s_refs">0</span><small>Invites</small></div>
+                    <div class="stat_box"><span id="s_earn">0.00</span><small>Earned</small></div>
+                </div>
+
+                <div style="padding:0 20px;"><h4 style="color:#888; font-size:12px;">EARNING TASKS</h4></div>
+                
+                <div class="menu_list">
+                    <div class="menu_item" onclick="watchAd()">
+                        <div class="menu_icon" style="background:rgba(241,196,15,0.15); color:#f1c40f;"><i class="fas fa-play"></i></div>
+                        <div class="menu_text"><h4>Watch Ads</h4><p>+0.50 ETB / Video</p></div>
+                        <button class="btn_go">GO</button>
+                    </div>
+                    <div class="menu_item" onclick="nav('invite')">
+                        <div class="menu_icon" style="background:rgba(46,204,113,0.15); color:#2ecc71;"><i class="fas fa-user-plus"></i></div>
+                        <div class="menu_text"><h4>Invite Friends</h4><p>Unlimited Earnings</p></div>
+                        <button class="btn_go">GO</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: INVITE -->
+            <div id="view_invite" class="tab_view">
+                <div class="invite_card">
+                    <i class="fas fa-gift" style="font-size:40px; margin-bottom:10px;"></i>
+                    <h2>Invite & Earn</h2>
+                    <p>Share your link to earn rewards!</p>
+                    <div class="copy_box">
+                        <input type="text" id="ref_link" readonly value="...">
+                        <button onclick="copyRef()">Copy</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: WALLET -->
+            <div id="view_wallet" class="tab_view">
+                <div class="form_box">
+                    <h3 style="margin-bottom:15px;">Withdraw Funds</h3>
+                    <input type="number" placeholder="Amount (Min 50)" class="input_field">
+                    <button class="btn_full" onclick="alert('Insufficient Balance!')">Withdraw</button>
+                </div>
+            </div>
+
+            <!-- TAB: ADMIN -->
+            <div id="view_admin" class="tab_view">
+                <div class="form_box">
+                    <h3>👑 Admin Panel</h3>
+                    <input type="text" id="adm_uid" placeholder="User ID" class="input_field">
+                    <input type="number" id="adm_amt" placeholder="Amount" class="input_field">
+                    <button class="btn_full" onclick="adminAddMoney()">Add Money</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- NAVIGATION -->
+        <nav class="bottom_nav">
+            <div class="nav_btn active" onclick="nav('home', this)"><i class="fas fa-home"></i> Home</div>
+            <div class="nav_btn" onclick="nav('invite', this)"><i class="fas fa-users"></i> Invite</div>
+            <div class="nav_btn" onclick="nav('wallet', this)"><i class="fas fa-wallet"></i> Wallet</div>
+        </nav>
+
+    </div>
+
+    <!-- 🔥 MODULE SCRIPT (SUPABASE LOGIC) 🔥 -->
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+        // ⚠️ YOUR CREDENTIALS ⚠️
+        const supabaseUrl = 'https://comloshfsvwadmofmxtx.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNvbWxvc2hmc3Z3YWRtb2ZteHR4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjcxODcwNzUsImV4cCI6MjA4Mjc2MzA3NX0.wez1tjpiBIIWX4eHM_0EmrKhmEjPFTB9R3Krt13SskI';
+        
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const ADMIN_ID = 8519835529;
+
+        // User State
+        let user = { 
+            user_id: 0, first_name: 'Guest', balance: 0.00, 
+            today_ads: 0, total_ref: 0, total_income: 0.00 
+        };
+        let adCount = 0;
+
+        // --- 1. STARTUP ---
+        window.onload = async () => {
+            // Telegram Init
+            if(window.Telegram?.WebApp) {
+                window.Telegram.WebApp.expand();
+                const tg = window.Telegram.WebApp.initDataUnsafe?.user;
+                if(tg) { user.user_id = tg.id; user.first_name = tg.first_name; }
+                else { user.user_id = ADMIN_ID; user.first_name = "Admin (Test)"; }
+            }
+
+            // Show Admin Btn
+            if(user.user_id == ADMIN_ID) document.getElementById('admin_btn').style.display = 'block';
+
+            // Connect DB with TIMEOUT protection
+            // (If DB is slow, it won't stuck on loading forever)
+            Promise.race([
+                loadData(),
+                new Promise(resolve => setTimeout(() => resolve('timeout'), 5000))
+            ]).then(res => {
+                if(res === 'timeout') {
+                    console.warn("DB Timeout, using local mode");
+                    document.getElementById('loading_msg').innerText = "Network slow... Opening App";
+                    setTimeout(openApp, 1000);
+                } else {
+                    openApp();
+                }
+            });
+        };
+
+        function openApp() {
+            document.getElementById('loading_screen').style.display = 'none';
+            document.getElementById('app_container').classList.remove('hidden');
+            updateUI();
+        }
+
+        // --- 2. DATABASE ---
+        async function loadData() {
+            try {
+                let { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('user_id', user.user_id)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') throw error;
+
+                if (data) {
+                    user = { ...user, ...data };
+                } else {
+                    // Create New
+                    await supabase.from('users').insert([user]);
+                }
+            } catch (e) {
+                console.error("DB Error:", e);
+                // Fallback to local storage so app still works
+                const local = localStorage.getItem('u_'+user.user_id);
+                if(local) user = JSON.parse(local);
+            }
+        }
+
+        async function saveData() {
+            updateUI();
+            localStorage.setItem('u_'+user.user_id, JSON.stringify(user)); // Local Backup
+            
+            // Cloud Sync
+            const { error } = await supabase
+                .from('users')
+                .update({ 
+                    balance: user.balance, 
+                    today_ads: user.today_ads,
+                    total_income: user.total_income
+                })
+                .eq('user_id', user.user_id);
+                
+            if(error) console.error("Cloud Save Failed");
+        }
+
+        function updateUI() {
+            document.getElementById('u_name').innerText = user.first_name;
+            document.getElementById('u_id').innerText = user.user_id;
+            document.getElementById('u_bal').innerText = user.balance.toFixed(2);
+            document.getElementById('s_ads').innerText = user.today_ads;
+            document.getElementById('s_refs').innerText = user.total_ref;
+            document.getElementById('s_earn').innerText = user.total_income.toFixed(2);
+            document.getElementById('ref_link').value = `https://t.me/RiyalNetBot?start=${user.user_id}`;
+        }
+
+        // --- 3. ACTIONS ---
+        
+        // Expose functions to window (Module Scope Fix)
+        window.nav = (page, el) => {
+            document.querySelectorAll('.tab_view').forEach(t => t.style.display = 'none');
+            document.getElementById('view_'+page).style.display = 'block';
+            
+            if(el) {
+                document.querySelectorAll('.nav_btn').forEach(b => b.classList.remove('active'));
+                el.classList.add('active');
+            }
+        };
+
+        window.openLink = (url) => {
+            if(window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
+            else window.open(url, '_blank');
+        };
+
+        window.copyRef = () => {
+            const el = document.getElementById('ref_link');
+            el.select(); document.execCommand('copy');
+            alert("Link Copied!");
+        };
+
+        window.watchAd = () => {
+            const btn = event.currentTarget.querySelector('.btn_go');
+            
+            if(typeof window.show_10378147 === 'function') {
+                btn.innerText = "...";
+                window.show_10378147().then(() => {
+                    handleReward();
+                    btn.innerText = "GO";
+                }).catch(() => {
+                    if(confirm("Ad failed. Simulate?")) handleReward();
+                    btn.innerText = "GO";
+                });
+            } else {
+                if(confirm("Script Missing. Simulate?")) handleReward();
+            }
+        };
+
+        function handleReward() {
+            adCount++;
+            if(adCount < 3) alert(`Ad ${adCount}/3 Done. Keep watching!`);
+            else {
+                const r = 0.50;
+                user.balance += r;
+                user.total_income += r;
+                user.today_ads++;
+                adCount = 0;
+                saveData();
+                alert(`🎉 +${r} ETB Added!`);
+            }
+        }
+
+        window.adminAddMoney = async () => {
+            const uid = document.getElementById('adm_uid').value;
+            const amt = parseFloat(document.getElementById('adm_amt').value);
+            if(!uid || !amt) return;
+
+            // Fetch target user current balance first
+            let { data } = await supabase.from('users').select('balance').eq('user_id', uid).single();
+            
+            if(data) {
+                const newBal = data.balance + amt;
+                await supabase.from('users').update({ balance: newBal }).eq('user_id', uid);
+                alert(`Sent ${amt} ETB to ${uid}`);
+            } else {
+                alert("User not found in DB");
+            }
+        };
+    </script>
 </body>
 </html>
