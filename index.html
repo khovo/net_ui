@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RiyalNet Bot</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background-color: #0f111a; color: white; font-family: sans-serif; text-align: center; padding: 20px; }
+        .card { background: #161b28; padding: 20px; border-radius: 15px; margin-top: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .btn { background: #f1c40f; color: black; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+        h1 { color: #f1c40f; }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <h1>RiyalNet 🚀</h1>
+        <p>User: <span id="username">Loading...</span></p>
+        
+        <div class="card">
+            <p>BALANCE</p>
+            <h1 id="balance">0.00 ETB</h1>
+        </div>
+
+        <button class="btn" onclick="watchAd()">📺 Watch Ad (+0.50)</button>
+    </div>
+
+    <script>
+        // ⚠️ እዚህ ጋር የ BACKEND ሊንክህን ታስገባለህ (Backendን Deploy ካደረግክ በኋላ)
+        // ለምሳሌ: "https://riyalnet-backend.vercel.app"
+        const BACKEND_URL = "https://YOUR_BACKEND_URL.vercel.app"; 
+
+        let user = { id: 0, first_name: "Guest" };
+
+        // 1. Telegram User ማግኘት
+        window.onload = function() {
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+                const tgUser = window.Telegram.WebApp.initDataUnsafe?.user;
+                if (tgUser) {
+                    user.id = tgUser.id;
+                    user.first_name = tgUser.first_name;
+                }
+            }
+            document.getElementById('username').innerText = user.first_name;
+            
+            // ዳታ ከ Backend ለመቀበል (Backend ሲሰራ ይሄን እናበራዋለን)
+            // fetchUserData(); 
+        };
+
+        // 2. Watch Ad (Simulation -> Backend Call)
+        function watchAd() {
+            // እዚህ ጋር ወደ Backend "ብር ጨምር" ብለን እንልካለን
+            alert("ይሄ Frontend ነው። Backend ሲሰራ እዚህ ጋር ይገናኛል!");
+            
+            /* Backend ሲሰራ የሚገባው ኮድ:
+            fetch(`${BACKEND_URL}/api/add_balance`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ user_id: user.id, amount: 0.50 })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('balance').innerText = data.new_balance + " ETB";
+            });
+            */
+        }
+    </script>
+</body>
+</html>
