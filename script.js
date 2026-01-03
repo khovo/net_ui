@@ -1,173 +1,286 @@
-const BACKEND_URL = "https://net-end.vercel.app";
-const ADMIN_ID = "8519835529"; // ⚠️ ያንተን ID እዚህ ጋር አስተካክል
+// --- CONFIG ---
+const ADMIN_ID = 8519835529; // ያንተ ID
+const BOT_LINK = "https://t.me/RiyalNetBot"; 
 
-let user = { id: 0, first_name: "Guest", photo_url: "" };
+// LINKS
+const LINKS = {
+    payment: "https://t.me/yourpaymentproofchannel",
+    news: "https://t.me/eliteledger",
+    support: "https://t.me/imranun"
+};
 
+let user = { 
+    id: 0, firstName: 'Guest', balance: 0.00, 
+    todayAds: 0, totalRef: 0, totalIncome: 0.00, 
+    adsWatchedTotal: 0, photoUrl: ''
+};
+let globalTasks = [];
+let adSequence = 0;
+
+// --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
+    // Fast Loading
+    let w = 0; const bar = document.getElementById('progress');
+    const int = setInterval(() => { w+=10; if(bar) bar.style.width=w+'%'; if(w>=100) clearInterval(int); }, 50);
+    setTimeout(() => { 
+        document.getElementById('loading-screen').style.display='none'; 
+        document.getElementById('app-container').classList.remove('hidden'); 
+    }, 1500);
+
+    // Telegram Setup
     if (window.Telegram && window.Telegram.WebApp) {
-        const tg = window.Telegram.WebApp;
-        tg.expand();
-        
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            user.id = tg.initDataUnsafe.user.id.toString();
-            user.first_name = tg.initDataUnsafe.user.first_name;
-            user.photo_url = tg.initDataUnsafe.user.photo_url; // 🔥 ፎቶውን እዚህ ጋር እንቀበላለን
+        window.Telegram.WebApp.expand();
+        const u = window.Telegram.WebApp.initDataUnsafe?.user;
+        if(u) {
+            user.id = u.id;
+            user.firstName = u.first_name;
+            user.photoUrl = u.photo_url;
         } else {
-            // Test
+            // Test Mode
             user.id = ADMIN_ID; 
-            user.first_name = "Admin (Test)";
+            user.firstName = "Admin";
         }
-    }
-    
-    // Admin Check
-    if (user.id === ADMIN_ID) {
-        document.getElementById('admin-icon').classList.remove('hidden');
+    } else {
+        user.id = ADMIN_ID; user.firstName = "Admin";
     }
 
-    initData();
-    loadTasks();
+    if(user.id == ADMIN_ID) {
+        document.getElementById('admin-btn').classList.remove('hidden');
+        loadAdminStats(); // Load Admin Data
+    }
+
+    loadData();
+    renderLeaderboard();
 });
 
-async function initData() {
-    try {
-        // User Info እና Photo ወደ Backend መላክ (Update)
-        const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                first_name: user.first_name, 
-                photo_url: user.photo_url 
-            })
-        });
-        
-        const data = await response.json();
-        
-        // UI Update
-        document.getElementById('username').innerText = data.first_name;
-        document.getElementById('balance').innerText = (data.balance || 0).toFixed(2);
-        document.getElementById('userid').innerText = user.id;
-        
-        if(data.photo_url) {
-            document.getElementById('avatar').src = data.photo_url;
-        }
-
-        document.getElementById('loader').style.display = 'none';
-        document.getElementById('app').classList.remove('hidden');
-
-    } catch (e) {
-        console.error(e);
-        alert("Connection Failed");
+// --- LOCAL DATA HANDLING (Simple & Fast) ---
+function loadData() {
+    const saved = localStorage.getItem(`u_${user.id}`);
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        user = { ...parsed, id: user.id, firstName: user.firstName, photoUrl: user.photoUrl || parsed.photoUrl };
     }
+    
+    // Load Tasks
+    const tasks = localStorage.getItem('g_tasks');
+    if(tasks) globalTasks = JSON.parse(tasks);
+
+    updateUI();
+    renderTasks();
 }
 
-// --- ADS ---
-function watchAd() {
-    const btn = event.currentTarget.querySelector('.btn-action');
-    btn.innerText = "...";
+function saveData() {
+    localStorage.setItem(`u_${user.id}`, JSON.stringify(user));
+    localStorage.setItem('g_tasks', JSON.stringify(globalTasks));
+    updateUI();
+}
+
+function updateUI() {
+    safeSet('username', user.firstName);
+    safeSet('user-id', user.id);
+    safeSet('display-balance', user.balance.toFixed(2));
     
+    if(user.photoUrl) document.getElementById('user-avatar').src = user.photoUrl;
+
+    // Stats
+    safeSet('stat-today-ads', user.todayAds);
+    safeSet('stat-total-ref', user.totalRef);
+    safeSet('stat-total-income', user.totalIncome.toFixed(2));
+    safeSet('ads-left', 50 - user.todayAds);
+    
+    safeSet('req-invite-count', user.totalRef);
+    safeSet('req-ads-count', user.adsWatchedTotal);
+    safeSet('page-invite-count', user.totalRef);
+    safeSet('page-invite-earn', (user.totalRef * 1.00).toFixed(2));
+
+    checkRequirements();
+}
+
+function safeSet(id, txt) {
+    const el = document.getElementById(id);
+    if(el) el.innerText = txt;
+}
+
+// --- ADS LOGIC (3-Step) ---
+window.watchAd = function() {
+    if(user.todayAds >= 50) return alert("Daily limit reached!");
+
+    const btn = document.querySelector('.icon-box.ads');
+    
+    // Check Monetag
     if (typeof window.show_10378147 === 'function') {
+        if(btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         window.show_10378147().then(() => {
-            sendReward(0.50);
-            btn.innerText = "GO";
+            handleAdSuccess();
+            if(btn) btn.innerHTML = '<i class="fas fa-play"></i>';
         }).catch(() => {
-            if(confirm("Ad failed. Simulate?")) sendReward(0.50);
-            btn.innerText = "GO";
+            // Fallback
+            if(confirm("Ad failed. Simulate?")) { handleAdSuccess(); if(btn) btn.innerHTML = '<i class="fas fa-play"></i>'; }
         });
     } else {
-        if(confirm("Script Loading... Simulate?")) sendReward(0.50);
-        btn.innerText = "GO";
-    }
-}
-
-async function sendReward(amount) {
-    try {
-        const res = await fetch(`${BACKEND_URL}/api/add_balance`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ user_id: user.id, amount: amount })
-        });
-        const data = await res.json();
-        if (data.status === "success") {
-            document.getElementById('balance').innerText = data.new_balance.toFixed(2);
-            alert(`🎉 +${amount} ETB Added!`);
+        // Fallback
+        if(confirm("Ad Script Not Loaded. Simulate View?")) {
+            handleAdSuccess();
         }
-    } catch(e) { alert("Network Error"); }
-}
+    }
+};
 
-// --- ADMIN FUNCTIONS ---
-async function adminAddTask() {
-    const title = document.getElementById('adm-task-title').value;
-    const link = document.getElementById('adm-task-link').value;
-    const reward = document.getElementById('adm-task-reward').value;
-    
-    if(!title || !link) return alert("Fill all fields");
-    
-    await fetch(`${BACKEND_URL}/api/tasks`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, link, reward: parseFloat(reward) })
-    });
-    alert("Task Added!");
-    loadTasks(); // Refresh list
-}
-
-async function adminAddMoney() {
-    const uid = document.getElementById('adm-uid').value;
-    const amt = document.getElementById('adm-amt').value;
-    
-    await fetch(`${BACKEND_URL}/api/add_balance`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: uid, amount: parseFloat(amt) })
-    });
-    alert("Money Sent!");
-}
-
-async function loadWithdrawals() {
-    const res = await fetch(`${BACKEND_URL}/api/admin/withdrawals`);
-    const data = await res.json();
-    const box = document.getElementById('admin-withdrawals');
-    
-    if(data.length === 0) {
-        box.innerHTML = "<p>No requests</p>";
+function handleAdSuccess() {
+    adSequence++;
+    if(adSequence < 3) {
+        alert(`✅ Ad ${adSequence}/3 Completed! Watch ${3-adSequence} more.`);
     } else {
-        box.innerHTML = data.map(w => 
-            `<div style="background:#111; padding:10px; margin:5px; border-radius:5px;">
-                ID: ${w.user_id} <br> Amt: ${w.amount} ETB <br> ${w.method} - ${w.account}
-            </div>`
-        ).join('');
+        const reward = 0.50;
+        user.balance += reward;
+        user.totalIncome += reward;
+        user.todayAds++;
+        user.adsWatchedTotal++;
+        adSequence = 0;
+        saveData();
+        alert(`🎉 +${reward} ETB Added!`);
     }
 }
 
-// --- TASKS ---
-async function loadTasks() {
-    const res = await fetch(`${BACKEND_URL}/api/tasks`);
-    const tasks = await res.json();
-    const container = document.getElementById('tasks-container');
+// --- LINKS ---
+window.openLink = function(key) {
+    const url = LINKS[key];
+    if(!url) return alert("Link not set");
+    if (window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
+    else window.open(url, '_blank');
+};
+
+// --- WITHDRAWAL SYSTEM ---
+window.processWithdraw = function() {
+    if(document.getElementById('btn-withdraw').classList.contains('disabled')) return alert("Requirements Not Met!");
     
-    if(tasks.length === 0) container.innerHTML = "<p style='text-align:center; color:#666'>No tasks available</p>";
-    else {
-        container.innerHTML = tasks.map(t => `
-            <div class="menu-item" onclick="openUrl('${t.link}')">
-                <div class="icon invite"><i class="fas fa-check"></i></div>
-                <div class="text"><h4>${t.title}</h4><p>+${t.reward} ETB</p></div>
-                <button class="btn-action">DO</button>
+    const amt = parseFloat(document.getElementById('withdraw-amount').value);
+    const acc = document.getElementById('withdraw-account').value;
+    
+    if(!acc) return alert("Enter Account Number");
+    if(amt < 50) return alert("Minimum 50 ETB");
+    if(amt > user.balance) return alert("Insufficient Balance");
+
+    // Deduct Balance
+    user.balance -= amt;
+    saveData();
+
+    // Save Request to Local Storage (Simulating DB)
+    let requests = JSON.parse(localStorage.getItem('admin_withdrawals') || "[]");
+    requests.push({
+        id: Date.now(),
+        user_id: user.id,
+        amount: amt,
+        account: acc,
+        method: document.querySelector('.pay-option.active').innerText,
+        status: "Pending"
+    });
+    localStorage.setItem('admin_withdrawals', JSON.stringify(requests));
+
+    alert("Withdrawal Request Sent! Check History.");
+    if(user.id == ADMIN_ID) loadAdminStats(); // Refresh Admin Panel
+};
+
+// --- ADMIN PANEL (UPDATED) ---
+function loadAdminStats() {
+    // 1. User Stats (Simulation)
+    document.getElementById('adm-total-users').innerText = "1,240"; // Fake for now
+    document.getElementById('adm-total-payout').innerText = "4,500 ETB";
+
+    // 2. Withdrawal Requests
+    const requests = JSON.parse(localStorage.getItem('admin_withdrawals') || "[]");
+    const container = document.getElementById('admin-withdraw-list');
+    
+    if(requests.length === 0) {
+        container.innerHTML = "<p style='color:#666; font-size:12px;'>No pending requests</p>";
+    } else {
+        container.innerHTML = requests.map(req => `
+            <div style="background:#222; padding:10px; margin-bottom:5px; border-radius:5px; border:1px solid #333;">
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <span>User: ${req.user_id}</span>
+                    <span style="color:${req.status === 'Pending' ? '#f1c40f' : '#2ecc71'}">${req.status}</span>
+                </div>
+                <div style="font-weight:bold; margin:5px 0;">${req.amount} ETB via ${req.method}</div>
+                <div style="font-size:11px; color:#888;">Acc: ${req.account}</div>
+                ${req.status === 'Pending' ? `
+                <div style="margin-top:5px; display:flex; gap:5px;">
+                    <button onclick="approveWithdraw(${req.id})" style="background:#2ecc71; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:10px; font-weight:bold;">Approve</button>
+                    <button onclick="rejectWithdraw(${req.id})" style="background:#e74c3c; border:none; padding:5px 10px; border-radius:3px; cursor:pointer; font-size:10px; font-weight:bold; color:white;">Reject</button>
+                </div>` : ''}
             </div>
         `).join('');
     }
 }
 
-// Utils
-function switchTab(tabId, el) {
-    document.querySelectorAll('.tab-view').forEach(t => t.classList.add('hidden'));
-    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+window.approveWithdraw = function(id) {
+    let requests = JSON.parse(localStorage.getItem('admin_withdrawals') || "[]");
+    const req = requests.find(r => r.id === id);
+    if(req) {
+        req.status = "Paid ✅";
+        localStorage.setItem('admin_withdrawals', JSON.stringify(requests));
+        loadAdminStats();
+        alert("Marked as Paid!");
+    }
+};
+
+window.rejectWithdraw = function(id) {
+    let requests = JSON.parse(localStorage.getItem('admin_withdrawals') || "[]");
+    requests = requests.filter(r => r.id !== id); // Remove
+    localStorage.setItem('admin_withdrawals', JSON.stringify(requests));
+    loadAdminStats();
+    alert("Request Rejected & Removed");
+};
+
+// Admin Task Add
+window.adminAddTask = function() {
+    const t = document.getElementById('new-task-title').value;
+    const l = document.getElementById('new-task-link').value;
+    const r = parseFloat(document.getElementById('new-task-reward').value);
+    
+    if(t && l && r) {
+        globalTasks.push({ id: Date.now(), title: t, link: l, reward: r });
+        saveData();
+        alert("Task Added!");
+        renderTasks();
+    }
+};
+
+// --- UTILS ---
+window.switchPage = function(pid, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden-page'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+    document.getElementById('page-'+pid).classList.remove('hidden-page');
+    document.getElementById('page-'+pid).classList.add('active-page');
     if(el) {
-        document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
+    }
+};
+
+window.copyLink = function() { navigator.clipboard.writeText(`${BOT_LINK}?start=${user.id}`); alert("Copied!"); };
+window.selectMethod = function(el) { document.querySelectorAll('.pay-option').forEach(p=>p.classList.remove('active')); el.classList.add('active'); };
+
+function checkRequirements() {
+    const btn = document.getElementById('btn-withdraw');
+    // Logic: user.totalRef >= 5 && user.adsWatchedTotal >= 30 && user.balance >= 50
+    // For testing, let's make it easier:
+    if(user.balance >= 50) { 
+        btn.classList.remove('disabled'); 
+        btn.innerText = "Withdraw Now"; 
     }
 }
 
-function openUrl(url) {
-    if(window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
-    else window.open(url, '_blank');
+function renderLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    list.innerHTML = `<div class="lb-item"><span class="lb-rank">#1</span><span>Admin</span><span style="color:#f1c40f">500.00 ETB</span></div><div class="lb-item"><span class="lb-rank">#2</span><span>You</span><span style="color:#f1c40f">${user.totalIncome.toFixed(2)} ETB</span></div>`;
 }
+
+function renderTasks() {
+    const list = document.getElementById('task-list-container');
+    list.innerHTML = globalTasks.map(t => `
+        <div class="menu-item">
+            <div class="menu-text"><h4>${t.title}</h4><p>+${t.reward} ETB</p></div>
+            <button class="btn-go" onclick="window.openLinkExternal('${t.link}')">START</button>
+        </div>
+    `).join('');
+}
+window.openLinkExternal = (url) => window.open(url, '_blank');
