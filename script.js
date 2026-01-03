@@ -1,114 +1,161 @@
-:root {
-    --bg: #0f111a;
-    --card: #161b28;
-    --primary: #f1c40f;
-    --text: #fff;
-    --muted: #8899a6;
-    --border: #232d45;
-    --green: #2ecc71;
-    --red: #e74c3c;
+// 🔥 BACKEND URL (መጨረሻ ላይ "/" የለውም) 🔥
+const BACKEND_URL = "https://net-end.vercel.app";
+
+let user = { id: 0, first_name: "Guest" };
+
+// --- STARTUP ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Telegram Init
+    if (window.Telegram && window.Telegram.WebApp) {
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+            user.id = tg.initDataUnsafe.user.id;
+            user.first_name = tg.initDataUnsafe.user.first_name;
+        } else {
+            // Testing
+            user.id = 8519835529; 
+            user.first_name = "Admin (Test)";
+        }
+    }
+
+    // Load Data
+    initData();
+});
+
+async function initData() {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`);
+        const data = await response.json();
+
+        // UI Updates
+        document.getElementById('username').innerText = data.first_name || user.first_name;
+        document.getElementById('userid').innerText = user.id;
+        document.getElementById('balance').innerText = (data.balance || 0).toFixed(2);
+        
+        // Stats
+        document.getElementById('stat-ads').innerText = data.today_ads || 0;
+        document.getElementById('stat-refs').innerText = data.total_ref || 0;
+        document.getElementById('stat-income').innerText = (data.total_income || 0).toFixed(2);
+        document.getElementById('ads-left').innerText = 50 - (data.today_ads || 0);
+
+        // Invite & Req
+        document.getElementById('ref-link').value = `https://t.me/RiyalNetBot?start=${user.id}`;
+        document.getElementById('page-invite-count').innerText = data.total_ref || 0;
+        document.getElementById('page-invite-earn').innerText = ((data.total_ref || 0) * 1.00).toFixed(2) + " ETB";
+
+        checkRequirements(data);
+        renderLeaderboard(); // You can implement a real endpoint for this later
+
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('app').classList.remove('hidden');
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById('loader').innerHTML = "<p style='color:red'>Server Error</p>";
+    }
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+// --- ADS ---
+function watchAd() {
+    const btn = event.currentTarget.querySelector('.btn-go');
+    if(btn) btn.innerText = "...";
 
-/* Loader */
-#loader { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-.spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-#loader p { margin-top: 15px; font-size: 12px; color: var(--muted); }
+    if (typeof window.show_10378147 === 'function') {
+        window.show_10378147().then(() => {
+            sendReward(0.50);
+            if(btn) btn.innerText = "GO";
+        }).catch(() => {
+            if(confirm("Ad failed. Simulate?")) sendReward(0.50);
+            if(btn) btn.innerText = "GO";
+        });
+    } else {
+        if(confirm("Script Loading... Simulate?")) sendReward(0.50);
+    }
+}
 
-/* Header */
-.top-bar { padding: 15px 20px; background: rgba(22, 27, 40, 0.95); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.user-info { display: flex; gap: 12px; align-items: center; }
-.avatar-wrap { position: relative; }
-.avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); }
-.online-dot { position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: var(--green); border-radius: 50%; border: 2px solid var(--bg); }
-.info-text h3 { font-size: 15px; margin-bottom: 4px; font-weight: 600; }
+async function sendReward(amount) {
+    try {
+        const res = await fetch(`${BACKEND_URL}/api/add_balance`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: user.id, amount: amount })
+        });
+        const data = await res.json();
+        
+        if (data.status === "success") {
+            document.getElementById('balance').innerText = data.new_balance.toFixed(2);
+            alert(`🎉 +${amount} ETB Added!`);
+            // Refresh stats
+            initData();
+        }
+    } catch (e) { alert("Network Error"); }
+}
 
-/* 🔥 BADGE STYLE 🔥 */
-.id-badge { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.1); width: fit-content; }
-.id-badge i { font-size: 10px; color: var(--primary); }
+// --- REQUIREMENTS ---
+function checkRequirements(data) {
+    const r1 = document.getElementById('req-invite');
+    const r2 = document.getElementById('req-ads');
+    const r3 = document.getElementById('req-bal');
+    const btn = document.getElementById('btn-withdraw');
+    
+    // Safely handle missing data
+    const refs = data.total_ref || 0;
+    const ads = data.ads_watched_total || 0;
+    const bal = data.balance || 0;
 
-#admin-btn { font-size: 18px; color: var(--primary); padding: 10px; cursor: pointer; }
+    let ok1 = refs >= 5;
+    let ok2 = ads >= 30;
+    let ok3 = bal >= 50;
 
-/* Balance Card */
-.balance-card { position: relative; margin: 20px; padding: 25px; background: linear-gradient(135deg, #1e2538 0%, #0d1117 100%); border-radius: 20px; text-align: center; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-.glow-effect { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(241,196,15,0.08) 0%, transparent 60%); pointer-events: none; }
-.label { font-size: 11px; color: var(--muted); letter-spacing: 1px; font-weight: bold; }
-.amount { font-size: 40px; margin: 10px 0 20px; font-weight: 700; color: var(--text); }
-.amount small { font-size: 16px; color: var(--primary); }
+    if(ok1) { r1.classList.add('done'); r1.querySelector('i').className="fas fa-check-circle"; }
+    if(ok2) { r2.classList.add('done'); r2.querySelector('i').className="fas fa-check-circle"; }
+    if(ok3) { r3.classList.add('done'); r3.querySelector('i').className="fas fa-check-circle"; }
 
-.quick-actions { display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
-.quick-actions div { font-size: 10px; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.quick-actions i { font-size: 18px; color: var(--primary); background: rgba(241,196,15,0.1); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+    if(ok1 && ok2 && ok3) {
+        btn.classList.remove('disabled');
+        btn.innerText = "Request Withdrawal";
+    }
+}
 
-/* Stats Grid */
-.stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
-.stat-box { background: var(--card); padding: 12px; border-radius: 12px; text-align: center; border: 1px solid var(--border); }
-.stat-box span { display: block; font-size: 15px; font-weight: bold; color: var(--text); margin-bottom: 2px; }
-.stat-box small { font-size: 10px; color: var(--muted); }
+// --- UTILS ---
+function switchTab(tabId, el) {
+    document.querySelectorAll('.tab-view').forEach(t => t.classList.add('hidden'));
+    document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+    if(el) {
+        document.querySelectorAll('.nav-btn').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+    }
+}
 
-/* Menu */
-#content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
-.section-title { font-size: 12px; color: var(--muted); margin: 0 20px 10px; letter-spacing: 0.5px; font-weight: bold; }
-.hidden { display: none !important; }
+function openUrl(url) {
+    if(window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
+    else window.open(url, '_blank');
+}
 
-.menu-list { padding: 0 20px; }
-.menu-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; border: 1px solid var(--border); transition: 0.2s; }
-.menu-item:active { transform: scale(0.98); border-color: var(--primary); }
-.icon { width: 42px; height: 42px; border-radius: 12px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
-.icon.ads { background: rgba(241, 196, 15, 0.15); color: var(--primary); }
-.icon.invite { background: rgba(45, 108, 255, 0.15); color: #2D6CFF; }
-.text h4 { font-size: 13px; margin-bottom: 3px; }
-.text p { font-size: 10px; color: var(--muted); }
-.btn-go { margin-left: auto; background: var(--primary); border: none; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 10px; cursor: pointer; color: #000; }
+function copyRef() {
+    const el = document.getElementById('ref-link');
+    el.select(); document.execCommand('copy');
+    alert("Copied!");
+}
 
-/* Promo & Leaderboard */
-.promo-box { margin: 0 20px 20px; background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
-.promo-box h3 { font-size: 13px; margin-bottom: 10px; }
-.input-row { display: flex; gap: 10px; }
-.input-row input { flex: 1; background: #000; border: 1px solid #333; padding: 10px; border-radius: 8px; color: white; font-size: 12px; outline: none; }
-.input-row button { background: var(--primary); border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+function selectMethod(el) {
+    document.querySelectorAll('.pay-option').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+}
 
-.leaderboard-box { margin: 0 20px; background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-.lb-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; align-items: center; }
-.lb-rank { width: 20px; color: var(--muted); font-weight: bold; }
+function renderLeaderboard() {
+    const list = document.getElementById('leaderboard-list');
+    list.innerHTML = `
+        <div class="lb-item"><span class="lb-rank">#1</span><span>Admin</span><span style="color:#f1c40f">500.00 ETB</span></div>
+        <div class="lb-item"><span class="lb-rank">#2</span><span>User_X</span><span style="color:#f1c40f">320.00 ETB</span></div>
+    `;
+}
 
-/* Invite & Wallet */
-.info-card { background: var(--card); margin: 20px; padding: 30px 20px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
-.big-icon { font-size: 40px; color: var(--primary); margin-bottom: 15px; }
-.copy-row { display: flex; margin-top: 15px; background: #000; border-radius: 8px; border: 1px solid var(--border); overflow: hidden; }
-.copy-row input { flex: 1; background: transparent; border: none; color: white; padding: 10px; font-size: 12px; outline: none; }
-.copy-row button { background: #2D6CFF; border: none; width: 40px; color: white; cursor: pointer; }
-
-.invite-stats { display: flex; margin: 0 20px; gap: 10px; }
-.invite-stats div { flex: 1; background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
-.invite-stats h3 { font-size: 11px; color: var(--muted); }
-.invite-stats span { font-size: 16px; font-weight: bold; display: block; margin-top: 5px; }
-
-/* Wallet Requirements */
-.req-box { background: rgba(231, 76, 60, 0.08); border: 1px solid rgba(231, 76, 60, 0.3); padding: 15px; margin: 0 20px 20px; border-radius: 12px; }
-.req-box h4 { font-size: 12px; color: #ff7675; margin-bottom: 10px; text-transform: uppercase; }
-.req-item { font-size: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: var(--muted); }
-.req-item i { font-size: 14px; }
-.req-item.done { color: var(--text); }
-.req-item.done i { color: var(--green); }
-.req-item:not(.done) i { color: var(--red); }
-
-.wallet-form { padding: 0 20px 80px; }
-.payment-methods { display: flex; gap: 10px; margin-bottom: 15px; }
-.pay-option { flex: 1; padding: 12px; background: var(--card); text-align: center; border: 1px solid var(--border); border-radius: 10px; font-size: 12px; cursor: pointer; transition: 0.2s; }
-.pay-option.active { border-color: var(--primary); background: rgba(241, 196, 15, 0.1); color: var(--primary); }
-.full-input { width: 100%; padding: 14px; background: var(--card); border: 1px solid var(--border); color: #fff; border-radius: 10px; margin-bottom: 12px; font-size: 13px; outline: none; }
-.btn-main { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; color: black; cursor: pointer; }
-.btn-main.disabled { background: #333; color: #777; cursor: not-allowed; }
-
-/* Admin */
-.admin-panel { padding: 20px; }
-
-/* Bottom Nav */
-.bottom-nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid var(--border); z-index: 100; }
-.nav-btn { text-align: center; color: var(--muted); font-size: 10px; cursor: pointer; transition: 0.2s; }
-.nav-btn.active { color: var(--primary); }
-.nav-btn i { font-size: 20px; display: block; margin-bottom: 4px; }
+function redeemPromo() { alert("Invalid Code"); }
+function requestWithdraw() { 
+    if(document.getElementById('btn-withdraw').classList.contains('disabled')) return alert("Requirements not met!");
+    alert("Request Sent!"); 
+}
+window.adminAddMoney = async () => { alert("Use Backend Console"); };
