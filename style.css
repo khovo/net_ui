@@ -2,7 +2,7 @@
     --bg: #0f111a;
     --card: #161b28;
     --primary: #f1c40f;
-    --text: #fff;
+    --text: #ffffff;
     --muted: #8899a6;
     --border: #232d45;
     --green: #2ecc71;
@@ -14,23 +14,17 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 
 /* Loader */
 #loader { position: fixed; inset: 0; background: var(--bg); z-index: 2000; display: flex; justify-content: center; align-items: center; flex-direction: column; }
-.spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+.spinner { width: 45px; height: 45px; border: 4px solid #333; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 #loader p { margin-top: 15px; font-size: 12px; color: var(--muted); }
 
 /* Header */
 .top-bar { padding: 15px 20px; background: rgba(22, 27, 40, 0.95); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .user-info { display: flex; gap: 12px; align-items: center; }
-.avatar-wrap { position: relative; }
-.avatar { width: 45px; height: 45px; border-radius: 50%; border: 2px solid var(--primary); }
-.online-dot { position: absolute; bottom: 2px; right: 2px; width: 10px; height: 10px; background: var(--green); border-radius: 50%; border: 2px solid var(--bg); }
+.avatar { width: 42px; height: 42px; border-radius: 50%; border: 2px solid var(--primary); background: #333; }
 .info-text h3 { font-size: 15px; margin-bottom: 4px; font-weight: 600; }
-
-/* 🔥 BADGE STYLE 🔥 */
-.id-badge { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 12px; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.1); width: fit-content; }
-.id-badge i { font-size: 10px; color: var(--primary); }
-
-#admin-btn { font-size: 18px; color: var(--primary); padding: 10px; cursor: pointer; }
+.id-badge { font-size: 11px; color: var(--muted); background: rgba(255,255,255,0.08); padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+#admin-icon { font-size: 20px; color: var(--primary); cursor: pointer; padding: 5px; }
 
 /* Balance Card */
 .balance-card { position: relative; margin: 20px; padding: 25px; background: linear-gradient(135deg, #1e2538 0%, #0d1117 100%); border-radius: 20px; text-align: center; border: 1px solid var(--border); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
@@ -41,7 +35,12 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 
 .quick-actions { display: flex; justify-content: space-around; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; }
 .quick-actions div { font-size: 10px; color: var(--muted); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.quick-actions i { font-size: 18px; color: var(--primary); background: rgba(241,196,15,0.1); width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+.quick-actions i { font-size: 18px; color: var(--primary); background: rgba(241,196,15,0.1); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 10px; }
+
+/* Content */
+#content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
+.section-title { font-size: 12px; color: var(--muted); margin: 0 20px 10px; letter-spacing: 0.5px; font-weight: bold; }
+.hidden { display: none !important; }
 
 /* Stats Grid */
 .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; padding: 0 20px 20px; }
@@ -50,10 +49,6 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 .stat-box small { font-size: 10px; color: var(--muted); }
 
 /* Menu */
-#content { flex: 1; overflow-y: auto; padding-bottom: 80px; }
-.section-title { font-size: 12px; color: var(--muted); margin: 0 20px 10px; letter-spacing: 0.5px; font-weight: bold; }
-.hidden { display: none !important; }
-
 .menu-list { padding: 0 20px; }
 .menu-item { background: var(--card); padding: 15px; border-radius: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; border: 1px solid var(--border); transition: 0.2s; }
 .menu-item:active { transform: scale(0.98); border-color: var(--primary); }
@@ -64,16 +59,12 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 .text p { font-size: 10px; color: var(--muted); }
 .btn-go { margin-left: auto; background: var(--primary); border: none; padding: 6px 16px; border-radius: 20px; font-weight: bold; font-size: 10px; cursor: pointer; color: #000; }
 
-/* Promo & Leaderboard */
+/* Promo */
 .promo-box { margin: 0 20px 20px; background: var(--card); padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
 .promo-box h3 { font-size: 13px; margin-bottom: 10px; }
 .input-row { display: flex; gap: 10px; }
 .input-row input { flex: 1; background: #000; border: 1px solid #333; padding: 10px; border-radius: 8px; color: white; font-size: 12px; outline: none; }
 .input-row button { background: var(--primary); border: none; padding: 0 15px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-
-.leaderboard-box { margin: 0 20px; background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-.lb-item { display: flex; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12px; align-items: center; }
-.lb-rank { width: 20px; color: var(--muted); font-weight: bold; }
 
 /* Invite & Wallet */
 .info-card { background: var(--card); margin: 20px; padding: 30px 20px; border-radius: 15px; text-align: center; border: 1px solid var(--border); }
@@ -82,19 +73,12 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 .copy-row input { flex: 1; background: transparent; border: none; color: white; padding: 10px; font-size: 12px; outline: none; }
 .copy-row button { background: #2D6CFF; border: none; width: 40px; color: white; cursor: pointer; }
 
-.invite-stats { display: flex; margin: 0 20px; gap: 10px; }
-.invite-stats div { flex: 1; background: var(--card); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid var(--border); }
-.invite-stats h3 { font-size: 11px; color: var(--muted); }
-.invite-stats span { font-size: 16px; font-weight: bold; display: block; margin-top: 5px; }
-
-/* Wallet Requirements */
+/* Requirements */
 .req-box { background: rgba(231, 76, 60, 0.08); border: 1px solid rgba(231, 76, 60, 0.3); padding: 15px; margin: 0 20px 20px; border-radius: 12px; }
-.req-box h4 { font-size: 12px; color: #ff7675; margin-bottom: 10px; text-transform: uppercase; }
 .req-item { font-size: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: var(--muted); }
-.req-item i { font-size: 14px; }
+.req-item i { font-size: 14px; color: var(--red); }
 .req-item.done { color: var(--text); }
 .req-item.done i { color: var(--green); }
-.req-item:not(.done) i { color: var(--red); }
 
 .wallet-form { padding: 0 20px 80px; }
 .payment-methods { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -104,11 +88,8 @@ body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidde
 .btn-main { width: 100%; padding: 15px; background: var(--primary); border: none; border-radius: 12px; font-weight: bold; margin-top: 10px; color: black; cursor: pointer; }
 .btn-main.disabled { background: #333; color: #777; cursor: not-allowed; }
 
-/* Admin */
-.admin-panel { padding: 20px; }
-
 /* Bottom Nav */
 .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #111; display: flex; justify-content: space-around; padding: 15px 0 25px; border-top: 1px solid var(--border); z-index: 100; }
 .nav-btn { text-align: center; color: var(--muted); font-size: 10px; cursor: pointer; transition: 0.2s; }
 .nav-btn.active { color: var(--primary); }
-.nav-btn i { font-size: 20px; display: block; margin-bottom: 4px; }
+.nav-btn i { font-size: 22px; display: block; margin-bottom: 4px; }
