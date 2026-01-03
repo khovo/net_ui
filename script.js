@@ -1,77 +1,81 @@
-// 🔥 BACKEND URL (መጨረሻ ላይ "/" የለውም) 🔥
 const BACKEND_URL = "https://net-end.vercel.app";
+const ADMIN_ID = "8519835529"; // ⚠️ ያንተን ID እዚህ ጋር አስተካክል
 
-let user = { id: 0, first_name: "Guest" };
+let user = { id: 0, first_name: "Guest", photo_url: "" };
 
-// --- STARTUP ---
 document.addEventListener('DOMContentLoaded', () => {
-    // Telegram Init
     if (window.Telegram && window.Telegram.WebApp) {
         const tg = window.Telegram.WebApp;
         tg.expand();
         
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            user.id = tg.initDataUnsafe.user.id;
+            user.id = tg.initDataUnsafe.user.id.toString();
             user.first_name = tg.initDataUnsafe.user.first_name;
+            user.photo_url = tg.initDataUnsafe.user.photo_url; // 🔥 ፎቶውን እዚህ ጋር እንቀበላለን
         } else {
-            // Testing
-            user.id = 8519835529; 
+            // Test
+            user.id = ADMIN_ID; 
             user.first_name = "Admin (Test)";
         }
     }
+    
+    // Admin Check
+    if (user.id === ADMIN_ID) {
+        document.getElementById('admin-icon').classList.remove('hidden');
+    }
 
-    // Load Data
     initData();
+    loadTasks();
 });
 
 async function initData() {
     try {
-        const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`);
-        const data = await response.json();
-
-        // UI Updates
-        document.getElementById('username').innerText = data.first_name || user.first_name;
-        document.getElementById('userid').innerText = user.id;
-        document.getElementById('balance').innerText = (data.balance || 0).toFixed(2);
+        // User Info እና Photo ወደ Backend መላክ (Update)
+        const response = await fetch(`${BACKEND_URL}/api/user/${user.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                first_name: user.first_name, 
+                photo_url: user.photo_url 
+            })
+        });
         
-        // Stats
-        document.getElementById('stat-ads').innerText = data.today_ads || 0;
-        document.getElementById('stat-refs').innerText = data.total_ref || 0;
-        document.getElementById('stat-income').innerText = (data.total_income || 0).toFixed(2);
-        document.getElementById('ads-left').innerText = 50 - (data.today_ads || 0);
-
-        // Invite & Req
-        document.getElementById('ref-link').value = `https://t.me/RiyalNetBot?start=${user.id}`;
-        document.getElementById('page-invite-count').innerText = data.total_ref || 0;
-        document.getElementById('page-invite-earn').innerText = ((data.total_ref || 0) * 1.00).toFixed(2) + " ETB";
-
-        checkRequirements(data);
-        renderLeaderboard(); // You can implement a real endpoint for this later
+        const data = await response.json();
+        
+        // UI Update
+        document.getElementById('username').innerText = data.first_name;
+        document.getElementById('balance').innerText = (data.balance || 0).toFixed(2);
+        document.getElementById('userid').innerText = user.id;
+        
+        if(data.photo_url) {
+            document.getElementById('avatar').src = data.photo_url;
+        }
 
         document.getElementById('loader').style.display = 'none';
         document.getElementById('app').classList.remove('hidden');
 
     } catch (e) {
         console.error(e);
-        document.getElementById('loader').innerHTML = "<p style='color:red'>Server Error</p>";
+        alert("Connection Failed");
     }
 }
 
 // --- ADS ---
 function watchAd() {
-    const btn = event.currentTarget.querySelector('.btn-go');
-    if(btn) btn.innerText = "...";
-
+    const btn = event.currentTarget.querySelector('.btn-action');
+    btn.innerText = "...";
+    
     if (typeof window.show_10378147 === 'function') {
         window.show_10378147().then(() => {
             sendReward(0.50);
-            if(btn) btn.innerText = "GO";
+            btn.innerText = "GO";
         }).catch(() => {
             if(confirm("Ad failed. Simulate?")) sendReward(0.50);
-            if(btn) btn.innerText = "GO";
+            btn.innerText = "GO";
         });
     } else {
         if(confirm("Script Loading... Simulate?")) sendReward(0.50);
+        btn.innerText = "GO";
     }
 }
 
@@ -83,43 +87,77 @@ async function sendReward(amount) {
             body: JSON.stringify({ user_id: user.id, amount: amount })
         });
         const data = await res.json();
-        
         if (data.status === "success") {
             document.getElementById('balance').innerText = data.new_balance.toFixed(2);
             alert(`🎉 +${amount} ETB Added!`);
-            // Refresh stats
-            initData();
         }
-    } catch (e) { alert("Network Error"); }
+    } catch(e) { alert("Network Error"); }
 }
 
-// --- REQUIREMENTS ---
-function checkRequirements(data) {
-    const r1 = document.getElementById('req-invite');
-    const r2 = document.getElementById('req-ads');
-    const r3 = document.getElementById('req-bal');
-    const btn = document.getElementById('btn-withdraw');
+// --- ADMIN FUNCTIONS ---
+async function adminAddTask() {
+    const title = document.getElementById('adm-task-title').value;
+    const link = document.getElementById('adm-task-link').value;
+    const reward = document.getElementById('adm-task-reward').value;
     
-    // Safely handle missing data
-    const refs = data.total_ref || 0;
-    const ads = data.ads_watched_total || 0;
-    const bal = data.balance || 0;
+    if(!title || !link) return alert("Fill all fields");
+    
+    await fetch(`${BACKEND_URL}/api/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, link, reward: parseFloat(reward) })
+    });
+    alert("Task Added!");
+    loadTasks(); // Refresh list
+}
 
-    let ok1 = refs >= 5;
-    let ok2 = ads >= 30;
-    let ok3 = bal >= 50;
+async function adminAddMoney() {
+    const uid = document.getElementById('adm-uid').value;
+    const amt = document.getElementById('adm-amt').value;
+    
+    await fetch(`${BACKEND_URL}/api/add_balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: uid, amount: parseFloat(amt) })
+    });
+    alert("Money Sent!");
+}
 
-    if(ok1) { r1.classList.add('done'); r1.querySelector('i').className="fas fa-check-circle"; }
-    if(ok2) { r2.classList.add('done'); r2.querySelector('i').className="fas fa-check-circle"; }
-    if(ok3) { r3.classList.add('done'); r3.querySelector('i').className="fas fa-check-circle"; }
-
-    if(ok1 && ok2 && ok3) {
-        btn.classList.remove('disabled');
-        btn.innerText = "Request Withdrawal";
+async function loadWithdrawals() {
+    const res = await fetch(`${BACKEND_URL}/api/admin/withdrawals`);
+    const data = await res.json();
+    const box = document.getElementById('admin-withdrawals');
+    
+    if(data.length === 0) {
+        box.innerHTML = "<p>No requests</p>";
+    } else {
+        box.innerHTML = data.map(w => 
+            `<div style="background:#111; padding:10px; margin:5px; border-radius:5px;">
+                ID: ${w.user_id} <br> Amt: ${w.amount} ETB <br> ${w.method} - ${w.account}
+            </div>`
+        ).join('');
     }
 }
 
-// --- UTILS ---
+// --- TASKS ---
+async function loadTasks() {
+    const res = await fetch(`${BACKEND_URL}/api/tasks`);
+    const tasks = await res.json();
+    const container = document.getElementById('tasks-container');
+    
+    if(tasks.length === 0) container.innerHTML = "<p style='text-align:center; color:#666'>No tasks available</p>";
+    else {
+        container.innerHTML = tasks.map(t => `
+            <div class="menu-item" onclick="openUrl('${t.link}')">
+                <div class="icon invite"><i class="fas fa-check"></i></div>
+                <div class="text"><h4>${t.title}</h4><p>+${t.reward} ETB</p></div>
+                <button class="btn-action">DO</button>
+            </div>
+        `).join('');
+    }
+}
+
+// Utils
 function switchTab(tabId, el) {
     document.querySelectorAll('.tab-view').forEach(t => t.classList.add('hidden'));
     document.getElementById(`tab-${tabId}`).classList.remove('hidden');
@@ -133,29 +171,3 @@ function openUrl(url) {
     if(window.Telegram?.WebApp?.openLink) window.Telegram.WebApp.openLink(url);
     else window.open(url, '_blank');
 }
-
-function copyRef() {
-    const el = document.getElementById('ref-link');
-    el.select(); document.execCommand('copy');
-    alert("Copied!");
-}
-
-function selectMethod(el) {
-    document.querySelectorAll('.pay-option').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-}
-
-function renderLeaderboard() {
-    const list = document.getElementById('leaderboard-list');
-    list.innerHTML = `
-        <div class="lb-item"><span class="lb-rank">#1</span><span>Admin</span><span style="color:#f1c40f">500.00 ETB</span></div>
-        <div class="lb-item"><span class="lb-rank">#2</span><span>User_X</span><span style="color:#f1c40f">320.00 ETB</span></div>
-    `;
-}
-
-function redeemPromo() { alert("Invalid Code"); }
-function requestWithdraw() { 
-    if(document.getElementById('btn-withdraw').classList.contains('disabled')) return alert("Requirements not met!");
-    alert("Request Sent!"); 
-}
-window.adminAddMoney = async () => { alert("Use Backend Console"); };
