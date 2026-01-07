@@ -3,93 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>RiyalNet</title>
+    <title>RiyalNet Bot</title>
+    
+    <!-- SDKs -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src='//libtl.com/sdk.js' data-zone='10378147' data-sdk='show_10378147'></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- SYSTEM SCREENS -->
-    <div id="loader"><div class="spinner"></div><p>Loading Data...</p></div>
-    <div id="banned_screen" class="hidden overlay"><i class="fas fa-ban"></i><h2>BANNED</h2><p>Contact Support</p></div>
-    <div id="maintenance_screen" class="hidden overlay"><i class="fas fa-tools"></i><h2>UPDATING</h2><p>We'll be back soon!</p></div>
+    <!-- OVERLAYS (ለተጠቃሚዎች የሚታይ) -->
+    <div id="loader"><div class="spinner"></div><p>Connecting...</p></div>
+    
+    <div id="maintenance_screen" class="hidden" style="position:fixed; inset:0; background:#0f111a; z-index:3000; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+        <i class="fas fa-tools" style="font-size:50px; color:#f1c40f; margin-bottom:20px;"></i>
+        <h2>Maintenance Mode</h2>
+        <p style="color:#888;">The bot is currently updating.<br>Please try again later.</p>
+    </div>
 
-    <!-- MAIN APP -->
+    <div id="banned_screen" class="hidden" style="position:fixed; inset:0; background:#0f111a; z-index:3000; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+        <i class="fas fa-ban" style="font-size:50px; color:#e74c3c; margin-bottom:20px;"></i>
+        <h2 style="color:#e74c3c">Account Banned</h2>
+        <p style="color:#888;">You have violated our terms.</p>
+    </div>
+
+    <!-- Main App -->
     <div id="app" class="hidden">
         
-        <!-- HEADER -->
-        <div class="top-bar">
-            <div class="profile">
-                <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
-                <div class="info">
+        <header class="top-bar">
+            <div class="user-info">
+                <div class="avatar-wrap">
+                    <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
+                    <div class="online-dot"></div>
+                </div>
+                <div class="info-text">
                     <h3 id="username">Guest</h3>
                     <div class="id-badge">ID: <span id="userid">...</span></div>
                 </div>
             </div>
-            <div id="admin-icon" class="hidden" onclick="switchTab('admin')"><i class="fas fa-crown"></i></div>
-        </div>
+            <div id="admin-icon" class="hidden icon-btn" onclick="switchTab('admin')">
+                <i class="fas fa-crown"></i>
+            </div>
+        </header>
 
-        <!-- BALANCE -->
-        <div class="balance-box">
+        <div class="balance-card">
+            <div class="glow-effect"></div>
             <span class="label">TOTAL BALANCE</span>
             <h1 class="amount"><span id="balance">0.00</span> <small>ETB</small></h1>
-            <div class="quick-links">
+            <div class="quick-actions">
                 <div onclick="openUrl('https://t.me/yourpaymentproofchannel')"><i class="fas fa-receipt"></i> Payment</div>
                 <div onclick="openUrl('https://t.me/imranun')"><i class="fas fa-headset"></i> Support</div>
                 <div onclick="openUrl('https://t.me/eliteledger')"><i class="fas fa-bullhorn"></i> News</div>
             </div>
         </div>
 
-        <!-- CONTENT -->
-        <div id="main-content">
-            
+        <main id="content">
             <!-- HOME -->
             <div id="tab-home" class="tab-view active">
                 <div class="stats-grid">
                     <div class="stat-box"><span id="stat-ads">0</span><small>Ads</small></div>
                     <div class="stat-box"><span id="stat-refs">0</span><small>Invites</small></div>
-                    <div class="stat-box"><span id="stat-earn">0.00</span><small>Earned</small></div>
+                    <div class="stat-box"><span id="stat-earn">0.00</span><small>Total</small></div>
                 </div>
-
-                <div class="section-header">EARN MONEY</div>
-                <div class="menu-item" onclick="watchAd()">
-                    <div class="icon ads"><i class="fas fa-play"></i></div>
-                    <div class="text"><h4>Watch Ads</h4><p>3 Videos = Reward</p></div>
-                    <button class="btn-go" id="ad-btn-text">GO</button>
-                </div>
-                <div class="menu-item" onclick="switchTab('invite')">
-                    <div class="icon invite"><i class="fas fa-users"></i></div>
-                    <div class="text"><h4>Invite</h4><p>Bonus per friend</p></div>
-                    <button class="btn-go">GO</button>
+                <div class="section-title">EARN MONEY</div>
+                <div class="menu-list">
+                    <div class="menu-item" onclick="watchAd()">
+                        <div class="icon ads"><i class="fas fa-play"></i></div>
+                        <div class="text"><h4>Watch Ads</h4><p>Daily Limit: <span id="ads-left">50</span></p></div>
+                        <button class="btn-go">GO</button>
+                    </div>
+                    <div class="menu-item" onclick="switchTab('invite')">
+                        <div class="icon invite"><i class="fas fa-user-plus"></i></div>
+                        <div class="text"><h4>Invite</h4><p>+1.00 ETB per friend</p></div>
+                        <button class="btn-go">GO</button>
+                    </div>
                 </div>
             </div>
 
             <!-- TASKS -->
             <div id="tab-tasks" class="tab-view hidden">
-                <div class="section-header">TASKS</div>
-                <div id="tasks-container">Loading...</div>
+                <div class="section-title">AVAILABLE TASKS</div>
+                <div id="tasks-container" class="menu-list"><p style="text-align:center; color:#666;">Loading...</p></div>
             </div>
 
             <!-- INVITE -->
             <div id="tab-invite" class="tab-view hidden">
-                <div class="invite-card">
-                    <i class="fas fa-gift" style="font-size:40px; color:#f1c40f; margin-bottom:10px;"></i>
+                <div class="info-card">
+                    <i class="fas fa-gift big-icon"></i>
                     <h2>Invite & Earn</h2>
-                    <p>Share your link to earn rewards!</p>
-                    
-                    <!-- FIXED REFERRAL INPUT CSS -->
-                    <div class="ref-box">
+                    <p>Share your link!</p>
+                    <div class="copy-row">
                         <input type="text" id="ref-link" readonly value="...">
-                        <button onclick="copyRef()"><i class="far fa-copy"></i></button>
+                        <button onclick="copyLink()"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
             </div>
 
             <!-- WALLET -->
             <div id="tab-wallet" class="tab-view hidden">
-                <div class="section-header">WITHDRAW</div>
+                <div class="section-title">WITHDRAW</div>
                 <div class="req-box">
                     <div class="req-item" id="req-invite"><i class="fas fa-times-circle"></i> Invite +5 Friends</div>
                     <div class="req-item" id="req-ads"><i class="fas fa-times-circle"></i> Watch 30+ Ads</div>
@@ -100,48 +114,44 @@
                         <div class="pay-option active" onclick="selectMethod(this)">Telebirr</div>
                         <div class="pay-option" onclick="selectMethod(this)">CBE</div>
                     </div>
-                    <input id="wd-account" placeholder="Account Number" class="full-input">
-                    <input id="wd-amount" placeholder="Amount" type="number" class="full-input">
+                    <input type="tel" id="wd-account" placeholder="Account" class="full-input">
+                    <input type="number" id="wd-amount" placeholder="Amount" class="full-input">
                     <button id="btn-withdraw" class="btn-main disabled" onclick="requestWithdraw()">Withdraw</button>
                 </div>
             </div>
 
-            <!-- 🔥 NEW ADMIN PANEL (CLEANER) 🔥 -->
+            <!-- 🔥 ADMIN PANEL (UPDATED) 🔥 -->
             <div id="tab-admin" class="tab-view hidden">
-                <div class="admin-nav">
-                    <button onclick="showAdminSection('tasks')" class="active">Tasks</button>
-                    <button onclick="showAdminSection('users')">Users</button>
-                    <button onclick="showAdminSection('settings')">Settings</button>
-                </div>
+                <div class="info-box admin-panel">
+                    <h3 style="color:#f1c40f; text-align:center;">👑 Admin Console</h3>
+                    
+                    <!-- 1. System Control (Stop Bot) -->
+                    <h4 style="margin-top:20px; border-bottom:1px solid #333; padding-bottom:5px;">⚙️ System Control</h4>
+                    <button class="btn-main" style="background:#e67e22; margin-bottom:10px;" onclick="toggleMaintenance()">⚠️ Toggle Maintenance Mode</button>
+                    
+                    <!-- 2. User Ban -->
+                    <h4>🚫 User Management</h4>
+                    <input id="ban-uid" placeholder="User ID to Ban/Unban" class="full-input">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-main" style="background:#c0392b; flex:1;" onclick="banUser(true)">Ban</button>
+                        <button class="btn-main" style="background:#27ae60; flex:1;" onclick="banUser(false)">Unban</button>
+                    </div>
 
-                <!-- Admin: Tasks -->
-                <div id="adm-sec-tasks" class="admin-section">
-                    <h4>➕ Add Task</h4>
+                    <!-- 3. Add Task -->
+                    <h4 style="margin-top:20px;">➕ Add Task</h4>
                     <input id="adm-task-title" placeholder="Title" class="full-input">
                     <input id="adm-task-link" placeholder="Link" class="full-input">
                     <input id="adm-task-reward" placeholder="Reward" type="number" class="full-input">
                     <button class="btn-main" onclick="adminAddTask()">Create Task</button>
-                </div>
-
-                <!-- Admin: Users -->
-                <div id="adm-sec-users" class="admin-section hidden">
-                    <h4>🚫 Manage User</h4>
+                    
+                    <!-- 4. Money & Withdrawals -->
+                    <h4 style="margin-top:20px;">💰 Money & Requests</h4>
                     <input id="adm-uid" placeholder="User ID" class="full-input">
-                    <div style="display:flex; gap:10px;">
-                        <button class="btn-main" style="background:#e74c3c" onclick="banUser(true)">Ban</button>
-                        <button class="btn-main" style="background:#2ecc71" onclick="banUser(false)">Unban</button>
-                    </div>
-                    <hr style="border-color:#333; margin:15px 0;">
-                    <h4>💰 Send Money</h4>
-                    <input id="adm-send-amt" placeholder="Amount" type="number" class="full-input">
-                    <button class="btn-main" onclick="adminAddMoney()">Send</button>
-                </div>
-
-                <!-- Admin: Settings -->
-                <div id="adm-sec-settings" class="admin-section hidden">
-                    <h4>⚙️ System</h4>
-                    <button class="btn-main" style="background:#e67e22" onclick="toggleMaintenance(true)">🔴 Turn ON Maintenance</button>
-                    <button class="btn-main" style="background:#2ecc71; margin-top:10px;" onclick="toggleMaintenance(false)">🟢 Turn OFF Maintenance</button>
+                    <input id="adm-amt" placeholder="Amount" type="number" class="full-input">
+                    <button class="btn-main" onclick="adminAddMoney()">Send Funds</button>
+                    
+                    <button class="btn-go" onclick="loadWithdrawals()" style="width:100%; margin-top:10px;">Refresh Requests</button>
+                    <div id="admin-withdrawals" style="margin-top:10px;"></div>
                 </div>
             </div>
 
