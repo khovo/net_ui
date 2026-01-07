@@ -11,238 +11,149 @@
 </head>
 <body>
 
-    <!-- OVERLAYS (Hidden by default) -->
-    <div id="loader"><div class="spinner"></div><p>Connecting...</p></div>
-    
-    <div id="maintenance_screen" class="hidden overlay-screen">
-        <i class="fas fa-tools big-icon" style="color:#f1c40f"></i>
-        <h2>Maintenance Mode</h2>
-        <p>The bot is currently updating.<br>Please try again later.</p>
-    </div>
-
-    <div id="banned_screen" class="hidden overlay-screen">
-        <i class="fas fa-ban big-icon" style="color:#e74c3c"></i>
-        <h2>Account Banned</h2>
-        <p>You violated our terms.<br>Contact support.</p>
-    </div>
+    <!-- SYSTEM SCREENS -->
+    <div id="loader"><div class="spinner"></div><p>Loading Data...</p></div>
+    <div id="banned_screen" class="hidden overlay"><i class="fas fa-ban"></i><h2>BANNED</h2><p>Contact Support</p></div>
+    <div id="maintenance_screen" class="hidden overlay"><i class="fas fa-tools"></i><h2>UPDATING</h2><p>We'll be back soon!</p></div>
 
     <!-- MAIN APP -->
     <div id="app" class="hidden">
         
         <!-- HEADER -->
-        <header class="top-bar">
-            <div class="user-info">
-                <div class="avatar-wrap">
-                    <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
-                    <div class="online-dot"></div>
-                </div>
-                <div class="info-text">
+        <div class="top-bar">
+            <div class="profile">
+                <img src="https://via.placeholder.com/50" id="avatar" class="avatar">
+                <div class="info">
                     <h3 id="username">Guest</h3>
                     <div class="id-badge">ID: <span id="userid">...</span></div>
                 </div>
             </div>
-            <!-- Admin Icon (Only for you) -->
-            <div id="admin-icon" class="hidden" onclick="switchTab('admin')">
-                <i class="fas fa-crown" style="color: gold; font-size: 20px;"></i>
-            </div>
-        </header>
+            <div id="admin-icon" class="hidden" onclick="switchTab('admin')"><i class="fas fa-crown"></i></div>
+        </div>
 
-        <!-- BALANCE CARD -->
-        <div class="balance-card">
-            <div class="glow-effect"></div>
+        <!-- BALANCE -->
+        <div class="balance-box">
             <span class="label">TOTAL BALANCE</span>
             <h1 class="amount"><span id="balance">0.00</span> <small>ETB</small></h1>
-            <div class="quick-actions">
-                <div onclick="openUrl('https://t.me/yourpaymentproofchannel')">
-                    <i class="fas fa-receipt"></i> Payment
-                </div>
-                <div onclick="openUrl('https://t.me/imranun')">
-                    <i class="fas fa-headset"></i> Support
-                </div>
-                <div onclick="openUrl('https://t.me/eliteledger')">
-                    <i class="fas fa-bullhorn"></i> News
-                </div>
+            <div class="quick-links">
+                <div onclick="openUrl('https://t.me/yourpaymentproofchannel')"><i class="fas fa-receipt"></i> Payment</div>
+                <div onclick="openUrl('https://t.me/imranun')"><i class="fas fa-headset"></i> Support</div>
+                <div onclick="openUrl('https://t.me/eliteledger')"><i class="fas fa-bullhorn"></i> News</div>
             </div>
         </div>
 
-        <!-- SCROLLABLE CONTENT -->
-        <main id="content">
+        <!-- CONTENT -->
+        <div id="main-content">
             
-            <!-- HOME TAB -->
+            <!-- HOME -->
             <div id="tab-home" class="tab-view active">
-                
-                <!-- 1. Stats Grid (Missing Part Restored) -->
                 <div class="stats-grid">
-                    <div class="stat-box">
-                        <span id="stat-ads">0</span>
-                        <small>Today Ads</small>
-                    </div>
-                    <div class="stat-box">
-                        <span id="stat-refs">0</span>
-                        <small>Referrals</small>
-                    </div>
-                    <div class="stat-box">
-                        <span id="stat-income">0.00</span>
-                        <small>Total Earned</small>
-                    </div>
+                    <div class="stat-box"><span id="stat-ads">0</span><small>Ads</small></div>
+                    <div class="stat-box"><span id="stat-refs">0</span><small>Invites</small></div>
+                    <div class="stat-box"><span id="stat-earn">0.00</span><small>Earned</small></div>
                 </div>
 
-                <!-- 2. Earning Menu -->
-                <div class="section-title">EARN MONEY</div>
-                <div class="menu-list">
-                    <div class="menu-item" onclick="watchAd()">
-                        <div class="icon ads"><i class="fas fa-play"></i></div>
-                        <div class="text">
-                            <h4>Watch Ads</h4>
-                            <p>Daily Limit: <span id="ads-left">50</span></p>
-                        </div>
-                        <button class="btn-go" id="ad-btn-text">GO</button>
-                    </div>
-                    <div class="menu-item" onclick="switchTab('invite')">
-                        <div class="icon invite"><i class="fas fa-user-plus"></i></div>
-                        <div class="text">
-                            <h4>Invite Friends</h4>
-                            <p>+1.00 ETB per friend</p>
-                        </div>
-                        <button class="btn-go">GO</button>
-                    </div>
+                <div class="section-header">EARN MONEY</div>
+                <div class="menu-item" onclick="watchAd()">
+                    <div class="icon ads"><i class="fas fa-play"></i></div>
+                    <div class="text"><h4>Watch Ads</h4><p>3 Videos = Reward</p></div>
+                    <button class="btn-go" id="ad-btn-text">GO</button>
                 </div>
-
-                <!-- 3. Promo Code -->
-                <div class="promo-box">
-                    <h3>🎁 Promo Code</h3>
-                    <div class="input-row">
-                        <input type="text" id="promo-code" placeholder="Enter code...">
-                        <button onclick="redeemPromo()">Apply</button>
-                    </div>
-                </div>
-
-                <!-- 4. Leaderboard -->
-                <div class="section-title">🏆 TOP USERS</div>
-                <div id="leaderboard-list" class="leaderboard-box">
-                    <p style="text-align:center; padding:10px; font-size:12px; color:#666;">Loading...</p>
+                <div class="menu-item" onclick="switchTab('invite')">
+                    <div class="icon invite"><i class="fas fa-users"></i></div>
+                    <div class="text"><h4>Invite</h4><p>Bonus per friend</p></div>
+                    <button class="btn-go">GO</button>
                 </div>
             </div>
 
-            <!-- TASKS TAB -->
+            <!-- TASKS -->
             <div id="tab-tasks" class="tab-view hidden">
-                <div class="section-title">AVAILABLE TASKS</div>
-                <div id="tasks-container" class="menu-list">
-                    <p style="text-align:center; color:#666;">Loading tasks...</p>
-                </div>
+                <div class="section-header">TASKS</div>
+                <div id="tasks-container">Loading...</div>
             </div>
 
-            <!-- INVITE TAB -->
+            <!-- INVITE -->
             <div id="tab-invite" class="tab-view hidden">
-                <div class="info-card">
-                    <i class="fas fa-gift big-icon"></i>
+                <div class="invite-card">
+                    <i class="fas fa-gift" style="font-size:40px; color:#f1c40f; margin-bottom:10px;"></i>
                     <h2>Invite & Earn</h2>
-                    <p>Share your link to earn unlimited rewards!</p>
-                    <div class="copy-row">
+                    <p>Share your link to earn rewards!</p>
+                    
+                    <!-- FIXED REFERRAL INPUT CSS -->
+                    <div class="ref-box">
                         <input type="text" id="ref-link" readonly value="...">
-                        <button onclick="copyLink()"><i class="far fa-copy"></i></button>
-                    </div>
-                </div>
-                
-                <div class="invite-stats">
-                    <div>
-                        <h3>Invited</h3>
-                        <span id="page-invite-count">0</span>
-                    </div>
-                    <div>
-                        <h3>Earnings</h3>
-                        <span id="page-invite-earn" style="color:#2ecc71;">0.00</span>
+                        <button onclick="copyRef()"><i class="far fa-copy"></i></button>
                     </div>
                 </div>
             </div>
 
-            <!-- WALLET TAB -->
+            <!-- WALLET -->
             <div id="tab-wallet" class="tab-view hidden">
-                <div class="section-title">WITHDRAWAL</div>
-                
-                <!-- Requirements Checklist -->
+                <div class="section-header">WITHDRAW</div>
                 <div class="req-box">
-                    <h4>🔒 Requirements</h4>
-                    <div class="req-item" id="req-invite">
-                        <i class="fas fa-times-circle"></i> <span>Invite +5 Friends</span>
-                    </div>
-                    <div class="req-item" id="req-ads">
-                        <i class="fas fa-times-circle"></i> <span>Watch 30+ Ads</span>
-                    </div>
-                    <div class="req-item" id="req-bal">
-                        <i class="fas fa-times-circle"></i> <span>Min Balance 50 ETB</span>
-                    </div>
+                    <div class="req-item" id="req-invite"><i class="fas fa-times-circle"></i> Invite +5 Friends</div>
+                    <div class="req-item" id="req-ads"><i class="fas fa-times-circle"></i> Watch 30+ Ads</div>
+                    <div class="req-item" id="req-bal"><i class="fas fa-times-circle"></i> Min 50 ETB</div>
                 </div>
-
                 <div class="wallet-form">
                     <div class="payment-methods">
                         <div class="pay-option active" onclick="selectMethod(this)">Telebirr</div>
                         <div class="pay-option" onclick="selectMethod(this)">CBE</div>
                     </div>
-                    <input type="tel" id="wd-account" placeholder="Phone / Account" class="full-input">
-                    <input type="number" id="wd-amount" placeholder="Amount" class="full-input">
+                    <input id="wd-account" placeholder="Account Number" class="full-input">
+                    <input id="wd-amount" placeholder="Amount" type="number" class="full-input">
                     <button id="btn-withdraw" class="btn-main disabled" onclick="requestWithdraw()">Withdraw</button>
                 </div>
             </div>
 
-            <!-- ADMIN TAB -->
+            <!-- 🔥 NEW ADMIN PANEL (CLEANER) 🔥 -->
             <div id="tab-admin" class="tab-view hidden">
-                <div class="info-box">
-                    <h3 style="color:#f1c40f; text-align:center;">👑 Admin Console</h3>
-                    
-                    <!-- Maintenance -->
-                    <button class="btn-main" style="background:#e67e22; margin-bottom:20px;" onclick="toggleMaintenance()">⚠️ Toggle Maintenance</button>
-                    
-                    <!-- Ban User -->
-                    <h4>🚫 Ban User</h4>
-                    <input id="ban-uid" placeholder="User ID" class="full-input">
-                    <button class="btn-main" style="background:#c0392b; margin-bottom:20px;" onclick="banUser()">Ban / Unban</button>
+                <div class="admin-nav">
+                    <button onclick="showAdminSection('tasks')" class="active">Tasks</button>
+                    <button onclick="showAdminSection('users')">Users</button>
+                    <button onclick="showAdminSection('settings')">Settings</button>
+                </div>
 
-                    <!-- Add Task -->
-                    <h4>➕ Add New Task</h4>
+                <!-- Admin: Tasks -->
+                <div id="adm-sec-tasks" class="admin-section">
+                    <h4>➕ Add Task</h4>
                     <input id="adm-task-title" placeholder="Title" class="full-input">
                     <input id="adm-task-link" placeholder="Link" class="full-input">
                     <input id="adm-task-reward" placeholder="Reward" type="number" class="full-input">
                     <button class="btn-main" onclick="adminAddTask()">Create Task</button>
-                    
-                    <hr style="border-color:#333; margin:20px 0;">
-                    
-                    <!-- Send Money -->
-                    <h4>💰 Send Money</h4>
-                    <input id="adm-uid" placeholder="User ID" class="full-input">
-                    <input id="adm-amt" placeholder="Amount" type="number" class="full-input">
-                    <button class="btn-main" onclick="adminAddMoney()">Send</button>
+                </div>
 
-                    <hr style="border-color:#333; margin:20px 0;">
-                    
-                    <!-- Withdrawals -->
-                    <h4>🏦 Withdrawals</h4>
-                    <button class="btn-go" onclick="loadWithdrawals()" style="width:100%">Refresh List</button>
-                    <div id="admin-withdrawals" style="margin-top:10px;"></div>
+                <!-- Admin: Users -->
+                <div id="adm-sec-users" class="admin-section hidden">
+                    <h4>🚫 Manage User</h4>
+                    <input id="adm-uid" placeholder="User ID" class="full-input">
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn-main" style="background:#e74c3c" onclick="banUser(true)">Ban</button>
+                        <button class="btn-main" style="background:#2ecc71" onclick="banUser(false)">Unban</button>
+                    </div>
+                    <hr style="border-color:#333; margin:15px 0;">
+                    <h4>💰 Send Money</h4>
+                    <input id="adm-send-amt" placeholder="Amount" type="number" class="full-input">
+                    <button class="btn-main" onclick="adminAddMoney()">Send</button>
+                </div>
+
+                <!-- Admin: Settings -->
+                <div id="adm-sec-settings" class="admin-section hidden">
+                    <h4>⚙️ System</h4>
+                    <button class="btn-main" style="background:#e67e22" onclick="toggleMaintenance(true)">🔴 Turn ON Maintenance</button>
+                    <button class="btn-main" style="background:#2ecc71; margin-top:10px;" onclick="toggleMaintenance(false)">🟢 Turn OFF Maintenance</button>
                 </div>
             </div>
 
         </main>
 
-        <!-- BOTTOM NAVIGATION -->
         <nav class="bottom-nav">
-            <div class="nav-btn active" onclick="switchTab('home', this)">
-                <i class="fas fa-home"></i> <span>Home</span>
-            </div>
-            <div class="nav-btn" onclick="switchTab('tasks', this)">
-                <i class="fas fa-tasks"></i> <span>Tasks</span>
-            </div>
-            <div class="nav-btn" onclick="switchTab('invite', this)">
-                <i class="fas fa-users"></i> <span>Invite</span>
-            </div>
-            <div class="nav-btn" onclick="switchTab('wallet', this)">
-                <i class="fas fa-wallet"></i> <span>Wallet</span>
-            </div>
+            <div class="nav-btn active" onclick="switchTab('home', this)"><i class="fas fa-home"></i> Home</div>
+            <div class="nav-btn" onclick="switchTab('tasks', this)"><i class="fas fa-tasks"></i> Tasks</div>
+            <div class="nav-btn" onclick="switchTab('invite', this)"><i class="fas fa-users"></i> Invite</div>
+            <div class="nav-btn" onclick="switchTab('wallet', this)"><i class="fas fa-wallet"></i> Wallet</div>
         </nav>
-
     </div>
-
-    <!-- JS Link -->
     <script src="script.js"></script>
 </body>
 </html>
