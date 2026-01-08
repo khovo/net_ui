@@ -39,7 +39,7 @@ body { background-color: var(--bg); color: var(--text); height: 100vh; overflow:
 .bar-fill {
     height: 100%; width: 0%; background: #fff;
     box-shadow: 0 0 5px #fff;
-    transition: width 0.3s ease; /* Smooth fill */
+    /* Transition is handled via JS for Timer sync */
 }
 .bar-fill.filled { width: 100%; }
 
