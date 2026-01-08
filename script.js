@@ -1,21 +1,20 @@
-// --- CONFIG ---
+// --- CONFIGURATION ---
 const BACKEND_URL = "https://net-end.vercel.app";
 const ADMIN_ID = "8519835529";
 
-// --- STATE ---
 let currentUser = null;
-let currentMethod = 'Telebirr';
+let currentMethod = 'Telebirr'; 
+const AD_DURATION = 15000; // 15 Seconds per Ad (ለ Monetag ጊዜ መስጠት አለብን)
 
-// Telegram SDK
+// Telegram Setup
 const tg = window.Telegram.WebApp;
 tg.expand();
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Get User
-    const user = tg.initDataUnsafe?.user || { id: "0", first_name: "Browser Test", photo_url: "" };
-
-    // 2. Set Header UI
+    const user = tg.initDataUnsafe?.user || { id: "0", first_name: "Test User", photo_url: "" };
+    
+    // Set UI
     document.getElementById('u-name').innerText = user.first_name;
     document.getElementById('u-id').innerText = "ID: " + user.id;
     if (user.photo_url) document.getElementById('u-avatar').src = user.photo_url;
@@ -25,14 +24,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('admin-icon').classList.remove('hidden');
     }
 
-    // 3. Backend Sync
+    // Sync
     await syncUser(user);
 
-    // 4. Hide Loader
+    // Hide Startup Loader
     setTimeout(() => {
         document.getElementById('startup-loader').style.opacity = '0';
         setTimeout(() => document.getElementById('startup-loader').classList.add('hidden'), 500);
-    }, 1000);
+    }, 1500);
 });
 
 async function syncUser(user) {
@@ -45,85 +44,82 @@ async function syncUser(user) {
         const data = await res.json();
         currentUser = data.user;
         updateUI();
-    } catch (e) {
-        console.error("Sync Error:", e);
-    }
+    } catch (e) { console.error(e); }
 }
 
 function updateUI() {
     if (!currentUser) return;
     document.getElementById('bal-amount').innerText = currentUser.balance.toFixed(2);
     document.getElementById('stat-ads').innerText = currentUser.today_ads || 0;
-    
-    // Referral Link
     document.getElementById('ref-link').value = `https://t.me/RiyalNetBot?start=${currentUser.user_id}`;
 }
 
 // ==========================================
-// 🔥 STORY MODE AD LOGIC (CHAIN REACTION) 🔥
+// 🔥 MONETAG SLIDESHOW LOGIC (SIMULATION) 🔥
 // ==========================================
 
 async function startStorySequence() {
     // 1. Show Overlay
-    const overlay = document.getElementById('story-overlay');
-    overlay.classList.remove('hidden');
+    document.getElementById('story-overlay').classList.remove('hidden');
 
     // 2. Reset Bars
-    document.getElementById('seg-1').classList.remove('filled');
-    document.getElementById('seg-2').classList.remove('filled');
-    document.getElementById('seg-3').classList.remove('filled');
+    [1, 2, 3].forEach(i => {
+        const bar = document.getElementById(`seg-${i}`);
+        bar.classList.remove('filled');
+        bar.style.transition = 'none'; 
+        bar.style.width = '0%';
+    });
 
-    // 3. Start Ad Chain
     try {
-        // --- AD 1 ---
-        updateStoryStatus("Loading Ad 1 of 3...");
-        await playMonetagAd(); // Wait for Ad 1 to close
-        document.getElementById('seg-1').classList.add('filled'); // Fill Bar 1
+        // --- STEP 1 ---
+        updateStoryStatus("Opening Ad 1... (Wait 15s)");
+        animateBar(1); // Start Bar Animation
+        showMonetagAd(); // Show Ad
+        await wait(AD_DURATION); // Wait 15s
+        
+        // --- STEP 2 ---
+        updateStoryStatus("Opening Ad 2... (Wait 15s)");
+        animateBar(2);
+        showMonetagAd();
+        await wait(AD_DURATION);
 
-        // --- AD 2 ---
-        updateStoryStatus("Loading Ad 2 of 3...");
-        await playMonetagAd(); // Wait for Ad 2 to close
-        document.getElementById('seg-2').classList.add('filled'); // Fill Bar 2
+        // --- STEP 3 ---
+        updateStoryStatus("Opening Ad 3... (Wait 15s)");
+        animateBar(3);
+        showMonetagAd();
+        await wait(AD_DURATION);
 
-        // --- AD 3 ---
-        updateStoryStatus("Loading Ad 3 of 3...");
-        await playMonetagAd(); // Wait for Ad 3 to close
-        document.getElementById('seg-3').classList.add('filled'); // Fill Bar 3
-
-        // --- SUCCESS ---
-        updateStoryStatus("All Done! Crediting...");
+        // --- FINISH ---
+        updateStoryStatus("Completed! Adding Reward...");
         await claimReward();
 
     } catch (error) {
-        // User closed prematurely or error
-        tg.showAlert("Ad sequence interrupted. No reward.");
+        tg.showAlert("Ad sequence failed.");
         closeStoryOverlay();
     }
 }
 
-// Wrapper for Monetag SDK to make it awaitable
-function playMonetagAd() {
-    return new Promise((resolve, reject) => {
-        if (typeof show_10378147 === 'function') {
-            // SDK Exists: Call it
-            show_10378147().then(() => {
-                // Ad finished/closed successfully
-                resolve();
-            }).catch((e) => {
-                // Ad failed to load or error
-                console.error("Ad Error:", e);
-                // We resolve anyway to let them continue OR reject to stop.
-                // Usually better to resolve if it's just a 'no fill' to not block user,
-                // BUT for 'Watch to Earn', we might want to be strict.
-                // Let's resolve to be user-friendly for now (or use Simulation).
-                resolve(); 
-            });
-        } else {
-            // SDK Missing (AdBlock or Dev Mode): Simulate 3s delay
-            console.log("Monetag SDK missing. Simulating...");
-            setTimeout(resolve, 3000);
-        }
-    });
+// Helper: Animate the progress bar smoothly
+function animateBar(num) {
+    const bar = document.getElementById(`seg-${num}`);
+    // Force Reflow
+    void bar.offsetWidth;
+    bar.style.transition = `width ${AD_DURATION}ms linear`;
+    bar.style.width = '100%';
+}
+
+// Helper: Trigger Monetag
+function showMonetagAd() {
+    if (typeof show_10378147 === 'function') {
+        show_10378147().catch(e => console.log("Ad Error"));
+    } else {
+        console.log("Monetag SDK missing or Blocked.");
+    }
+}
+
+// Helper: Wait function
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function updateStoryStatus(text) {
@@ -141,7 +137,6 @@ async function claimReward() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: currentUser.user_id, amount: 0.50 })
         });
-        
         const data = await res.json();
         if (data.status === "success") {
             currentUser.balance = data.new_balance;
@@ -156,7 +151,7 @@ async function claimReward() {
 }
 
 // ==========================================
-// 💸 WALLET & ADMIN LOGIC
+// 💸 WALLET & ADMIN
 // ==========================================
 
 function selectMethod(method) {
@@ -207,9 +202,9 @@ function switchTab(tabId, el) {
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         el.classList.add('active');
     }
+    if (tabId === 'admin') fetchAdminData();
 }
 
-// Admin Placeholders
-async function fetchAdminData() { tg.showAlert("Refreshed"); }
-async function toggleMaintenance() { tg.showAlert("Toggled"); }
+async function fetchAdminData() { tg.showAlert("Data Refreshed"); }
+async function toggleMaintenance() { tg.showAlert("Maintenance Toggled"); }
 async function banUser() { tg.showAlert("User Banned"); }
