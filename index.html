@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RiyalNet Bot</title>
     
-    <!-- SDKs -->
+    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <!-- Ad Script (Monetag) -->
+    <!-- Monetag SDK -->
     <script src='//libtl.com/sdk.js' data-zone='10378147' data-sdk='show_10378147'></script>
 
     <!-- External Styles -->
@@ -16,43 +16,34 @@
 </head>
 <body>
 
-    <!-- 1. NEW LOADING SCREEN (Startup) -->
+    <!-- 1. STARTUP LOADER -->
     <div id="startup-loader" class="startup-overlay">
         <div class="neon-text">WELCOME TO<br>RIYALNET BOT</div>
-        <div class="spinner-box">
-            <div class="neon-spinner"></div>
-        </div>
+        <div class="spinner-box"><div class="neon-spinner"></div></div>
         <p class="loading-text">Loading User Data...</p>
     </div>
 
-    <!-- 2. STORY MODE AD OVERLAY (Hidden by default) -->
+    <!-- 2. STORY MODE OVERLAY (Hidden by default) -->
     <div id="story-overlay" class="story-overlay hidden">
-        <div class="story-header">
-            <!-- 3 Progress Bars -->
-            <div class="story-bar-container">
-                <div class="story-bar"><div id="bar-1" class="fill"></div></div>
-                <div class="story-bar"><div id="bar-2" class="fill"></div></div>
-                <div class="story-bar"><div id="bar-3" class="fill"></div></div>
-            </div>
-            <div class="close-story" onclick="closeStoryMode()"><i class="fas fa-times"></i></div>
+        <!-- Top Progress Bars (Instagram Style) -->
+        <div class="story-bars-wrapper">
+            <div class="story-bar"><div id="seg-1" class="bar-fill"></div></div>
+            <div class="story-bar"><div id="seg-2" class="bar-fill"></div></div>
+            <div class="story-bar"><div id="seg-3" class="bar-fill"></div></div>
         </div>
 
-        <div class="story-content">
-            <div class="ad-placeholder">
-                <i class="fas fa-play-circle pulsate"></i>
-                <h3 id="story-status">Watching Ad 1...</h3>
-                <p>Please wait <span id="story-timer">10</span>s</p>
-            </div>
-            <!-- Monetag Container invisible but active -->
-            <div id="monetag-container"></div>
+        <!-- Center Content -->
+        <div class="story-center">
+            <div class="pulsing-icon"><i class="fas fa-play-circle"></i></div>
+            <h2 id="story-status">Loading Ad 1...</h2>
+            <p style="color:#888; font-size:12px; margin-top:10px;">Don't close the ad!</p>
         </div>
 
-        <button id="btn-claim-reward" class="btn-claim hidden" onclick="claimStoryReward()">
-            CLAIM +0.50 ETB
-        </button>
+        <!-- Exit Button (Top Right) -->
+        <div class="story-close" onclick="closeStoryOverlay()"><i class="fas fa-times"></i></div>
     </div>
 
-    <!-- HEADER -->
+    <!-- APP HEADER -->
     <header>
         <div class="user-profile">
             <img id="u-avatar" src="https://via.placeholder.com/50" class="user-avatar" alt="User">
@@ -61,12 +52,12 @@
                 <span id="u-id">ID: ...</span>
             </div>
         </div>
-        <div id="admin-icon" class="admin-badge" onclick="switchTab('admin')">
+        <div id="admin-icon" class="admin-badge hidden" onclick="switchTab('admin')">
             <i class="fas fa-crown"></i>
         </div>
     </header>
 
-    <!-- MAIN CONTENT -->
+    <!-- MAIN APP CONTENT -->
     <div id="main-content">
 
         <!-- HOME TAB -->
@@ -76,35 +67,25 @@
                 <h1><span id="bal-amount">0.00</span> ETB</h1>
             </div>
 
-            <!-- Ad Trigger -->
             <div class="card neon-border">
                 <div class="card-icon"><i class="fas fa-tv"></i></div>
                 <div class="card-text">
-                    <h3>Watch Ads</h3>
-                    <p>Story Mode • Earn 0.50 ETB</p>
+                    <h3>Watch Stories</h3>
+                    <p>Watch 3 Ads • Earn 0.50 ETB</p>
                 </div>
-                <button class="btn-action" onclick="openStoryMode()">WATCH</button>
+                <!-- Triggers the Overlay Logic -->
+                <button class="btn-action" onclick="startStorySequence()">WATCH</button>
             </div>
 
-            <!-- Stats Row -->
             <div class="stats-row">
-                <div class="stat-box">
-                    <i class="fas fa-eye"></i>
-                    <span id="stat-ads">0</span>
-                    <small>Ads</small>
-                </div>
-                <div class="stat-box">
-                    <i class="fas fa-users"></i>
-                    <span id="stat-refs">0</span>
-                    <small>Refs</small>
-                </div>
+                <div class="stat-box"><i class="fas fa-eye"></i><span id="stat-ads">0</span><small>Ads</small></div>
+                <div class="stat-box"><i class="fas fa-users"></i><span id="stat-refs">0</span><small>Refs</small></div>
             </div>
         </div>
 
-        <!-- WALLET TAB (Updated UI) -->
+        <!-- WALLET TAB -->
         <div id="tab-wallet" class="tab-view">
             <h2 class="section-title">Select Method</h2>
-            
             <div class="payment-methods">
                 <div id="method-telebirr" class="method-card active" onclick="selectMethod('Telebirr')">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/1024px-Telegram_logo.svg.png" style="width:30px; filter: hue-rotate(200deg);"> 
@@ -117,62 +98,48 @@
                     <div class="check-mark"><i class="fas fa-check-circle"></i></div>
                 </div>
             </div>
-
             <div class="withdraw-form">
-                <label>Details</label>
                 <input id="wd-acc" type="number" placeholder="Account Number" class="neon-input">
                 <input id="wd-amt" type="number" placeholder="Amount (Min 50 ETB)" class="neon-input">
                 <button class="btn-main" onclick="requestWithdraw()">CONFIRM WITHDRAW</button>
             </div>
-            
-            <div id="wd-history" class="history-list">
-                <!-- History populated by JS -->
-            </div>
+            <div id="wd-history" class="history-list"></div>
         </div>
 
-        <!-- INVITE TAB (Updated UI) -->
+        <!-- INVITE TAB -->
         <div id="tab-invite" class="tab-view">
             <div class="referral-card">
                 <i class="fas fa-gift big-icon"></i>
                 <h2>Invite Friends</h2>
-                <p>Earn 10% from every friend's revenue forever!</p>
-                
+                <p>Earn 10% lifetime revenue!</p>
                 <div class="link-group">
                     <input id="ref-link" type="text" readonly value="Loading...">
                     <button onclick="copyRefLink()">COPY</button>
                 </div>
-
                 <div class="ref-stats">
-                    <div>
-                        <h4 id="page-ref-count">0</h4>
-                        <small>Invited</small>
-                    </div>
+                    <div><h4 id="page-ref-count">0</h4><small>Invited</small></div>
                     <div class="divider"></div>
-                    <div>
-                        <h4 id="page-ref-earn">0.00</h4>
-                        <small>Earned</small>
-                    </div>
+                    <div><h4 id="page-ref-earn">0.00</h4><small>Earned</small></div>
                 </div>
             </div>
         </div>
 
         <!-- ADMIN TAB -->
         <div id="tab-admin" class="tab-view">
-            <h2 style="color: gold; text-align: center; margin-bottom: 20px;">Admin Panel 🔒</h2>
+            <h2 style="color: gold; text-align: center;">Admin Panel</h2>
             <div class="admin-controls">
-                <button class="admin-btn" onclick="toggleMaintenance()">Toggle Maintenance</button>
                 <button class="admin-btn" onclick="fetchAdminData()">Refresh</button>
+                <button class="admin-btn" onclick="toggleMaintenance()">Maintenance</button>
             </div>
-            <div id="adm-withdrawals">Loading...</div>
-            <div class="admin-panel" style="margin-top:20px">
+            <div id="adm-withdrawals" style="margin-top:10px;">Loading...</div>
+            <div class="admin-panel" style="margin-top:20px;">
                 <input id="adm-target-id" placeholder="User ID" class="neon-input">
                 <button class="admin-btn red" onclick="banUser()">Ban User</button>
             </div>
         </div>
-
     </div>
 
-    <!-- Navigation -->
+    <!-- NAV -->
     <nav class="bottom-nav">
         <div class="nav-item active" onclick="switchTab('home', this)"><i class="fas fa-home"></i>Home</div>
         <div class="nav-item" onclick="switchTab('invite', this)"><i class="fas fa-user-plus"></i>Invite</div>
@@ -180,7 +147,6 @@
         <div class="nav-item hidden" id="nav-admin" onclick="switchTab('admin', this)"><i class="fas fa-shield-alt"></i>Admin</div>
     </nav>
 
-    <!-- External Script -->
     <script src="script.js"></script>
 </body>
 </html>
