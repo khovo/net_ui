@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>RiyalNet Bot</title>
     
-    <!-- SDKs -->
+    <!-- Telegram SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
-    <!-- Monetag -->
-    <script src='//libtl.com/sdk.js' data-zone='10378147' data-sdk='show_10378147'></script>
+    
+    <!-- 🔥 ADSGRAM SCRIPT (UPDATED WITH ID 20796) 🔥 -->
+    <script src="https://adsgram.ai/js/adsgram.js?blockId=20796"></script>
 
-    <!-- External Styles -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,26 +20,23 @@
     <div id="startup-loader" class="startup-overlay">
         <div class="neon-text">WELCOME TO<br>RIYALNET BOT</div>
         <div class="spinner-box"><div class="neon-spinner"></div></div>
-        <p class="loading-text" style="color:#666; margin-top:10px;">Connecting...</p>
+        <p class="loading-text">Loading User Data...</p>
     </div>
 
-    <!-- 2. STORY MODE OVERLAY (Hidden) -->
+    <!-- 2. STORY MODE OVERLAY -->
     <div id="story-overlay" class="story-overlay hidden">
-        <!-- Bars -->
         <div class="story-bars-wrapper">
             <div class="story-bar"><div id="seg-1" class="bar-fill"></div></div>
             <div class="story-bar"><div id="seg-2" class="bar-fill"></div></div>
             <div class="story-bar"><div id="seg-3" class="bar-fill"></div></div>
         </div>
 
-        <!-- Center -->
         <div class="story-center">
             <div class="pulsing-icon"><i class="fas fa-play-circle"></i></div>
-            <h2 id="story-status">Preparing...</h2>
-            <p style="color:#666; font-size:12px; margin-top:10px;">Do not close the app</p>
+            <h2 id="story-status">Loading Ad...</h2>
+            <p style="color:#888; font-size:12px; margin-top:10px;">Do not close the video!</p>
         </div>
 
-        <!-- Close -->
         <div class="story-close" onclick="closeStoryOverlay()"><i class="fas fa-times"></i></div>
     </div>
 
@@ -71,9 +68,9 @@
                 <div class="card-icon"><i class="fas fa-tv"></i></div>
                 <div class="card-text">
                     <h3>Story Ads</h3>
-                    <p>Watch 3 Slides • Earn 0.50 ETB</p>
+                    <p>Watch 3 Videos • Earn 0.50 ETB</p>
                 </div>
-                <button class="btn-action" onclick="startStorySequence()">WATCH</button>
+                <button class="btn-action" onclick="startAdsgramSequence()">WATCH</button>
             </div>
 
             <div class="stats-row" style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
@@ -92,7 +89,7 @@
 
         <!-- WALLET -->
         <div id="tab-wallet" class="tab-view">
-            <h2 class="section-title" style="margin-bottom:15px;">Select Method</h2>
+            <h2 class="section-title">Select Method</h2>
             <div class="payment-methods">
                 <div id="method-telebirr" class="method-card active" onclick="selectMethod('Telebirr')">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/1024px-Telegram_logo.svg.png" style="width:30px; filter: hue-rotate(200deg);"> 
