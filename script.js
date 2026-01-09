@@ -1,20 +1,21 @@
-// --- CONFIGURATION ---
+// --- CONFIG ---
 const BACKEND_URL = "https://net-end.vercel.app";
 const ADMIN_ID = "8519835529";
+// 🔥 UPDATED BLOCK ID 🔥
+const ADSGRAM_BLOCK_ID = "20796"; 
 
 let currentUser = null;
-let currentMethod = 'Telebirr'; 
-const AD_DURATION = 15000; // 15 Seconds per Ad (ለ Monetag ጊዜ መስጠት አለብን)
+let currentMethod = 'Telebirr';
+let AdController = null; 
 
-// Telegram Setup
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// --- INITIALIZATION ---
+// --- INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
     const user = tg.initDataUnsafe?.user || { id: "0", first_name: "Test User", photo_url: "" };
     
-    // Set UI
+    // UI Setup
     document.getElementById('u-name').innerText = user.first_name;
     document.getElementById('u-id').innerText = "ID: " + user.id;
     if (user.photo_url) document.getElementById('u-avatar').src = user.photo_url;
@@ -24,14 +25,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('admin-icon').classList.remove('hidden');
     }
 
-    // Sync
+    // Initialize Adsgram with YOUR ID
+    if (window.Adsgram) {
+        AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+    }
+
+    // Backend Sync
     await syncUser(user);
 
-    // Hide Startup Loader
+    // Hide Loader
     setTimeout(() => {
         document.getElementById('startup-loader').style.opacity = '0';
         setTimeout(() => document.getElementById('startup-loader').classList.add('hidden'), 500);
-    }, 1500);
+    }, 1000);
 });
 
 async function syncUser(user) {
@@ -55,72 +61,68 @@ function updateUI() {
 }
 
 // ==========================================
-// 🔥 MONETAG SLIDESHOW LOGIC (SIMULATION) 🔥
+// 🔥 ADSGRAM STORY LOGIC (CHAINED) 🔥
 // ==========================================
 
-async function startStorySequence() {
-    // 1. Show Overlay
+async function startAdsgramSequence() {
+    // Show Overlay
     document.getElementById('story-overlay').classList.remove('hidden');
 
-    // 2. Reset Bars
+    // Reset Bars
     [1, 2, 3].forEach(i => {
         const bar = document.getElementById(`seg-${i}`);
         bar.classList.remove('filled');
-        bar.style.transition = 'none'; 
-        bar.style.width = '0%';
     });
 
     try {
-        // --- STEP 1 ---
-        updateStoryStatus("Opening Ad 1... (Wait 15s)");
-        animateBar(1); // Start Bar Animation
-        showMonetagAd(); // Show Ad
-        await wait(AD_DURATION); // Wait 15s
-        
-        // --- STEP 2 ---
-        updateStoryStatus("Opening Ad 2... (Wait 15s)");
-        animateBar(2);
-        showMonetagAd();
-        await wait(AD_DURATION);
+        // --- AD 1 ---
+        updateStoryStatus("Loading Ad 1 of 3...");
+        await showAd(); 
+        document.getElementById('seg-1').classList.add('filled');
+        await wait(1000);
 
-        // --- STEP 3 ---
-        updateStoryStatus("Opening Ad 3... (Wait 15s)");
-        animateBar(3);
-        showMonetagAd();
-        await wait(AD_DURATION);
+        // --- AD 2 ---
+        updateStoryStatus("Loading Ad 2 of 3...");
+        await showAd();
+        document.getElementById('seg-2').classList.add('filled');
+        await wait(1000);
 
-        // --- FINISH ---
-        updateStoryStatus("Completed! Adding Reward...");
+        // --- AD 3 ---
+        updateStoryStatus("Loading Ad 3 of 3...");
+        await showAd();
+        document.getElementById('seg-3').classList.add('filled');
+
+        // --- SUCCESS ---
+        updateStoryStatus("Success! Crediting...");
         await claimReward();
 
     } catch (error) {
-        tg.showAlert("Ad sequence failed.");
+        tg.showAlert("Ad sequence stopped.");
         closeStoryOverlay();
     }
 }
 
-// Helper: Animate the progress bar smoothly
-function animateBar(num) {
-    const bar = document.getElementById(`seg-${num}`);
-    // Force Reflow
-    void bar.offsetWidth;
-    bar.style.transition = `width ${AD_DURATION}ms linear`;
-    bar.style.width = '100%';
+function showAd() {
+    return new Promise((resolve, reject) => {
+        if (!AdController) {
+            // Fallback for testing
+            console.log("Adsgram missing/blocked. Simulating...");
+            setTimeout(resolve, 2000); 
+            return;
+        }
+
+        AdController.show().then((result) => {
+            // result.done = true means fully watched
+            resolve();
+        }).catch((result) => {
+            // result.done = false or error
+            console.error("Adsgram Error/Skip:", result);
+            reject(result);
+        });
+    });
 }
 
-// Helper: Trigger Monetag
-function showMonetagAd() {
-    if (typeof show_10378147 === 'function') {
-        show_10378147().catch(e => console.log("Ad Error"));
-    } else {
-        console.log("Monetag SDK missing or Blocked.");
-    }
-}
-
-// Helper: Wait function
-function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 function updateStoryStatus(text) {
     document.getElementById('story-status').innerText = text;
@@ -153,7 +155,6 @@ async function claimReward() {
 // ==========================================
 // 💸 WALLET & ADMIN
 // ==========================================
-
 function selectMethod(method) {
     currentMethod = method;
     document.querySelectorAll('.method-card').forEach(el => el.classList.remove('active'));
@@ -205,6 +206,5 @@ function switchTab(tabId, el) {
     if (tabId === 'admin') fetchAdminData();
 }
 
-async function fetchAdminData() { tg.showAlert("Data Refreshed"); }
-async function toggleMaintenance() { tg.showAlert("Maintenance Toggled"); }
-async function banUser() { tg.showAlert("User Banned"); }
+async function fetchAdminData() { tg.showAlert("Refreshed"); }
+async function toggleMaintenance() { tg.showAlert("Toggled"); }
