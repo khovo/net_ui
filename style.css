@@ -18,49 +18,18 @@ body { background-color: var(--bg); color: var(--text); height: 100vh; overflow:
 .neon-input { background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; outline: none; width: 100%; margin-bottom: 10px; }
 .neon-input:focus { border-color: var(--accent); }
 
-/* --- STORY MODE OVERLAY --- */
-.story-overlay {
-    position: fixed; inset: 0; background: #000; z-index: 9000;
-    display: flex; flex-direction: column;
-}
-
-/* Progress Bars Container */
-.story-bars-wrapper {
-    position: absolute; top: 10px; left: 10px; right: 10px;
-    display: flex; gap: 5px; height: 4px; z-index: 9001;
-}
-
-/* Individual Bar Background */
-.story-bar {
-    flex: 1; background: rgba(255, 255, 255, 0.3); border-radius: 2px; overflow: hidden;
-}
-
-/* The Fill inside the bar */
-.bar-fill {
-    height: 100%; width: 0%; background: #fff;
-    box-shadow: 0 0 5px #fff;
-    /* Transition is handled via JS for Timer sync */
-}
+/* STORY OVERLAY */
+.story-overlay { position: fixed; inset: 0; background: #000; z-index: 9000; display: flex; flex-direction: column; }
+.story-bars-wrapper { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 5px; height: 4px; z-index: 9001; }
+.story-bar { flex: 1; background: rgba(255, 255, 255, 0.3); border-radius: 2px; overflow: hidden; }
+.bar-fill { height: 100%; width: 0%; background: #fff; box-shadow: 0 0 5px #fff; transition: width 0.3s ease; }
 .bar-fill.filled { width: 100%; }
+.story-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.pulsing-icon { font-size: 50px; color: var(--accent); margin-bottom: 20px; animation: pulse 1s infinite; }
+.story-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 24px; padding: 10px; cursor: pointer; z-index: 9002; }
 
-/* Center Content */
-.story-center {
-    flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center;
-}
-.pulsing-icon {
-    font-size: 50px; color: var(--accent); margin-bottom: 20px;
-    animation: pulse 1s infinite;
-}
-.story-close {
-    position: absolute; top: 20px; right: 20px; color: #fff; font-size: 24px; padding: 10px; cursor: pointer; z-index: 9002;
-}
-
-/* --- OTHER UI --- */
-.startup-overlay {
-    position: fixed; inset: 0; background: #000; z-index: 9999;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    transition: opacity 0.5s ease;
-}
+/* OTHER UI */
+.startup-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
 .neon-text { font-size: 24px; font-weight: bold; text-align: center; color: #fff; text-shadow: 0 0 10px var(--primary); margin-bottom: 30px; }
 .neon-spinner { width: 50px; height: 50px; border: 4px solid #333; border-top: 4px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
 
@@ -70,26 +39,21 @@ header { padding: 15px; background: var(--glass); display: flex; justify-content
 
 .tab-view { display: none; animation: fadeUp 0.3s ease; }
 .tab-view.active { display: block; }
-
 .balance-card { text-align: center; padding: 20px; background: radial-gradient(circle at center, #1a1a1a, #000); border: 1px solid #333; border-radius: 15px; margin-bottom: 20px; }
 .balance-card h1 { font-size: 40px; margin: 10px 0; color: var(--accent); }
-
 .card { background: var(--card-bg); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 15px; }
 .neon-border { border: 1px solid var(--primary); box-shadow: 0 0 5px rgba(188, 19, 254, 0.2); }
 .card-icon { width: 40px; height: 40px; background: rgba(188, 19, 254, 0.1); color: var(--primary); border-radius: 8px; display: flex; justify-content: center; align-items: center; font-size: 18px; }
 .btn-action { background: var(--primary); color: #fff; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 12px; }
-
 .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
 .method-card { background: #111; border: 2px solid #333; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; cursor: pointer; position: relative; }
 .method-card.active { border-color: var(--gold); }
 .check-mark { position: absolute; top: 5px; right: 5px; color: var(--gold); display: none; }
 .method-card.active .check-mark { display: block; }
-
 .referral-card { background: #111; border: 1px solid #333; padding: 30px 20px; border-radius: 15px; text-align: center; }
 .link-group { display: flex; background: #000; border: 1px solid #333; border-radius: 8px; margin: 20px 0; }
 .link-group input { flex: 1; background: transparent; border: none; color: var(--muted); padding: 12px; outline: none; }
 .link-group button { background: var(--primary); color: #fff; border: none; padding: 0 20px; font-weight: bold; }
-
 .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #111; border-top: 1px solid #222; display: flex; justify-content: space-around; padding: 10px 0 25px; z-index: 100; }
 .nav-item { color: var(--muted); display: flex; flex-direction: column; align-items: center; font-size: 10px; }
 .nav-item.active { color: var(--accent); }
