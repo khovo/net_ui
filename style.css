@@ -18,15 +18,16 @@ body { background-color: var(--bg); color: var(--text); height: 100vh; overflow:
 .neon-input { background: #000; border: 1px solid #333; color: #fff; padding: 15px; border-radius: 8px; outline: none; width: 100%; margin-bottom: 10px; }
 .neon-input:focus { border-color: var(--accent); }
 
-/* STORY OVERLAY - Z-INDEX LOWERED TO PREVENT BLOCKING AD */
-.story-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.96); z-index: 2000; display: flex; flex-direction: column; }
-.story-bars-wrapper { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 5px; height: 4px; z-index: 2001; }
+/* STORY OVERLAY - Z-INDEX DRASTICALLY LOWERED TO 1000 */
+/* This ensures the Adsgram Ad (usually z-index 9999+) appears ON TOP of our overlay */
+.story-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.96); z-index: 1000; display: flex; flex-direction: column; }
+.story-bars-wrapper { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; gap: 5px; height: 4px; z-index: 1001; }
 .story-bar { flex: 1; background: rgba(255, 255, 255, 0.3); border-radius: 2px; overflow: hidden; }
 .bar-fill { height: 100%; width: 0%; background: #fff; box-shadow: 0 0 5px #fff; transition: width 0.3s ease; }
 .bar-fill.filled { width: 100%; }
 .story-center { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .pulsing-icon { font-size: 50px; color: var(--accent); margin-bottom: 20px; animation: pulse 1s infinite; }
-.story-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 24px; padding: 10px; cursor: pointer; z-index: 2002; }
+.story-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 24px; padding: 10px; cursor: pointer; z-index: 1002; }
 
 /* OTHER UI */
 .startup-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.5s ease; }
