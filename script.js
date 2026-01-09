@@ -1,7 +1,6 @@
 // --- CONFIG ---
 const BACKEND_URL = "https://net-end.vercel.app";
 const ADMIN_ID = "8519835529";
-// 🔥 UPDATED BLOCK ID 🔥
 const ADSGRAM_BLOCK_ID = "20796"; 
 
 let currentUser = null;
@@ -11,7 +10,6 @@ let AdController = null;
 const tg = window.Telegram.WebApp;
 tg.expand();
 
-// --- INIT ---
 document.addEventListener('DOMContentLoaded', async () => {
     const user = tg.initDataUnsafe?.user || { id: "0", first_name: "Test User", photo_url: "" };
     
@@ -25,15 +23,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('admin-icon').classList.remove('hidden');
     }
 
-    // Initialize Adsgram with YOUR ID
     if (window.Adsgram) {
         AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
     }
 
-    // Backend Sync
     await syncUser(user);
 
-    // Hide Loader
     setTimeout(() => {
         document.getElementById('startup-loader').style.opacity = '0';
         setTimeout(() => document.getElementById('startup-loader').classList.add('hidden'), 500);
@@ -61,75 +56,33 @@ function updateUI() {
 }
 
 // ==========================================
-// 🔥 ADSGRAM STORY LOGIC (CHAINED) 🔥
+// 🔥 SIMPLE AD LOGIC (NO SLIDESHOW) 🔥
 // ==========================================
 
-async function startAdsgramSequence() {
-    // Show Overlay
-    document.getElementById('story-overlay').classList.remove('hidden');
+function watchAd() {
+    const btn = document.getElementById('btn-watch');
+    btn.innerText = "Loading...";
+    btn.disabled = true;
 
-    // Reset Bars
-    [1, 2, 3].forEach(i => {
-        const bar = document.getElementById(`seg-${i}`);
-        bar.classList.remove('filled');
-    });
-
-    try {
-        // --- AD 1 ---
-        updateStoryStatus("Loading Ad 1 of 3...");
-        await showAd(); 
-        document.getElementById('seg-1').classList.add('filled');
-        await wait(1000);
-
-        // --- AD 2 ---
-        updateStoryStatus("Loading Ad 2 of 3...");
-        await showAd();
-        document.getElementById('seg-2').classList.add('filled');
-        await wait(1000);
-
-        // --- AD 3 ---
-        updateStoryStatus("Loading Ad 3 of 3...");
-        await showAd();
-        document.getElementById('seg-3').classList.add('filled');
-
-        // --- SUCCESS ---
-        updateStoryStatus("Success! Crediting...");
-        await claimReward();
-
-    } catch (error) {
-        tg.showAlert("Ad sequence stopped.");
-        closeStoryOverlay();
+    if (!AdController) {
+        // Fallback or Error
+        tg.showAlert("Ad Controller not ready. Retrying...");
+        btn.innerText = "WATCH";
+        btn.disabled = false;
+        // Try re-init if needed or simulate for testing
+        // setTimeout(() => claimReward(), 2000); 
+        return;
     }
-}
 
-function showAd() {
-    return new Promise((resolve, reject) => {
-        if (!AdController) {
-            // Fallback for testing
-            console.log("Adsgram missing/blocked. Simulating...");
-            setTimeout(resolve, 2000); 
-            return;
-        }
-
-        AdController.show().then((result) => {
-            // result.done = true means fully watched
-            resolve();
-        }).catch((result) => {
-            // result.done = false or error
-            console.error("Adsgram Error/Skip:", result);
-            reject(result);
-        });
+    AdController.show().then((result) => {
+        // User watched ad successfully
+        claimReward();
+    }).catch((result) => {
+        // User skipped or error
+        tg.showAlert("Ad skipped or failed.");
+        btn.innerText = "WATCH";
+        btn.disabled = false;
     });
-}
-
-function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function updateStoryStatus(text) {
-    document.getElementById('story-status').innerText = text;
-}
-
-function closeStoryOverlay() {
-    document.getElementById('story-overlay').classList.add('hidden');
 }
 
 async function claimReward() {
@@ -140,6 +93,7 @@ async function claimReward() {
             body: JSON.stringify({ user_id: currentUser.user_id, amount: 0.50 })
         });
         const data = await res.json();
+        
         if (data.status === "success") {
             currentUser.balance = data.new_balance;
             updateUI();
@@ -148,7 +102,9 @@ async function claimReward() {
     } catch (e) {
         tg.showAlert("Server Error.");
     } finally {
-        closeStoryOverlay();
+        const btn = document.getElementById('btn-watch');
+        btn.innerText = "WATCH";
+        btn.disabled = false;
     }
 }
 
